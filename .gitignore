@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+.venv/
+.env
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+
+# Node
+node_modules/
+dist/
+
+# Java
+target/
+*.log
