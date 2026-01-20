@@ -2,7 +2,7 @@
 name = "ai-service"
 version = "0.1.0"
 description = ""
-authors = ["Your Name <you@example.com>"]
+authors = ["Sofiia Poklonova <sofapokl@gmail.com>"]
 readme = "README.md"
 packages = [
     { include = "app" },

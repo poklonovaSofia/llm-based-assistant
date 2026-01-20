@@ -1,22 +1,20 @@
 from fastapi import FastAPI
-from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.output_parsers import StrOutputParser
-from langserve import add_routes
+from pydantic import BaseModel
+from app.rag_engine import get_rag_response
+from app.utils import rewrite_query_no_llm
 
-app = FastAPI(
-    title="LangChain Server",
-    version="1.0",
-    description="A simple api server using LangChain's Runnable interfaces",
-)
+app = FastAPI(title="Medicine RAG API")
 
-prompt = ChatPromptTemplate.from_template("Tell me a joke about {topic}")
-chain = prompt | StrOutputParser()
-add_routes(
-    app,
-    chain,
-    path="/joke",
-)
+class QueryRequest(BaseModel):
+    query: str
 
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="localhost", port=8000)
+@app.post("/ask")
+async def ask_question(request: QueryRequest):
+    rewritten = rewrite_query_no_llm(request.query)
+    answer = get_rag_response(request.query, rewritten)
+    
+    return {
+        "original_query": request.query,
+        "rewritten_query": rewritten,
+        "answer": answer
+    }
