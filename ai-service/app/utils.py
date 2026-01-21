@@ -18,9 +18,19 @@ def extract_text(file_path):
             return mammoth.extract_raw_text(f).value
     return ""
 
-def chunk_text(text, size=300):
+def chunk_text(text, size=500, overlap=100):
+    # Видаляємо зайві пробіли та розриви рядків, які часто бувають у PDF
+    text = re.sub(r'\s+', ' ', text).strip()
     words = text.split()
-    return [" ".join(words[i:i+size]) for i in range(0, len(words), size)]
+    chunks = []
+    i = 0
+    while i < len(words):
+        chunk = words[i : i + size]
+        chunks.append(" ".join(chunk))
+        if len(words) <= size:
+            break
+        i += (size - overlap)
+    return chunks
 
 def rewrite_query_no_llm(query, max_keywords=5):
     words = re.findall(r"[a-zA-Z]+", query.lower())

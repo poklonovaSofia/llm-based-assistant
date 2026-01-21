@@ -21,9 +21,17 @@ services:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-
+      - ./ai-service/app/db/init.sql:/docker-entrypoint-initdb.d/init.sql
+  ollama:
+      image: ollama/ollama
+      container_name: v-ollama
+      ports:
+        - "11434:11434"
+      volumes:
+      - ollama_data:/root/.ollama
 volumes:
   postgres_data:
+  ollama_data:
