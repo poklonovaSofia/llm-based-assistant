@@ -3,7 +3,7 @@ from pydantic import BaseModel
 from app.rag_engine import get_rag_response
 from app.utils import rewrite_query_no_llm
 from app.db import get_connection
-from app.ingest import process_single_file # Імпортуємо функцію
+from app.ingest import process_single_file
 from fastapi import UploadFile, File
 import os
 app = FastAPI(title="Medicine RAG API")

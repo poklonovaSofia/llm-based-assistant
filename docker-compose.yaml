@@ -11,6 +11,7 @@ services:
       - postgres
     environment:
       DATABASE_URL: ${DATABASE_URL}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
 
   postgres:
     image: pgvector/pgvector:pg16
@@ -25,13 +26,13 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./ai-service/app/db/init.sql:/docker-entrypoint-initdb.d/init.sql
-  ollama:
-      image: ollama/ollama
-      container_name: v-ollama
-      ports:
-        - "11434:11434"
-      volumes:
-      - ollama_data:/root/.ollama
+  # ollama:
+  #     image: ollama/ollama
+  #     container_name: v-ollama
+  #     ports:
+  #       - "11434:11434"
+  #     volumes:
+  #     - ollama_data:/root/.ollama
 volumes:
   postgres_data:
-  ollama_data:
+  # ollama_data:
