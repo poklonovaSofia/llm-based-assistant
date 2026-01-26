@@ -39,8 +39,6 @@ def rewrite_query_with_llm(query, agent_name):
             lang = detect(query)
         except:
             lang = "sk"
-
-        # ОНОВЛЕНИЙ ПРОМПТ
         prompt = f"""
         You are an expert assistant in the field of: {agent_name}.
         Extract the main subjects, entities, and technical terms from the user's question.
@@ -58,7 +56,6 @@ def rewrite_query_with_llm(query, agent_name):
             messages=[{"role": "user", "content": prompt}],
             temperature=0
         )
-        # Очищаємо результат від зайвих знаків пунктуації, щоб не зламати SQL
         rewritten = response.choices[0].message.content.strip()
         rewritten = re.sub(r'[,.;:!?]', '', rewritten) 
         return rewritten
