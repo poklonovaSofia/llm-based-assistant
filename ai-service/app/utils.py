@@ -1,9 +1,12 @@
-import fitz, docx, mammoth, re, os
-import nltk
-from nltk.corpus import stopwords
+import fitz, docx, mammoth, re
 
-nltk.download("stopwords", quiet=True)
-stop_words = set(stopwords.words("english"))
+import re
+import os
+from openai import OpenAI
+from langdetect import detect
+from nltk.corpus import stopwords
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+client = OpenAI(api_key=OPENAI_API_KEY)
 
 def extract_text(file_path):
     ext = file_path.lower()
@@ -19,7 +22,6 @@ def extract_text(file_path):
     return ""
 
 def chunk_text(text, size=500, overlap=100):
-    # Видаляємо зайві пробіли та розриви рядків, які часто бувають у PDF
     text = re.sub(r'\s+', ' ', text).strip()
     words = text.split()
     chunks = []
@@ -31,8 +33,41 @@ def chunk_text(text, size=500, overlap=100):
             break
         i += (size - overlap)
     return chunks
+def rewrite_query_with_llm(query, agent_name):
+    try:
+        try:
+            lang = detect(query)
+        except:
+            lang = "sk"
 
-def rewrite_query_no_llm(query, max_keywords=5):
-    words = re.findall(r"[a-zA-Z]+", query.lower())
-    filtered = [w for w in words if w not in stop_words]
-    return " ".join(filtered[:max_keywords]) if filtered else " ".join(words[:max_keywords])
+        # ОНОВЛЕНИЙ ПРОМПТ
+        prompt = f"""
+        You are an expert assistant in the field of: {agent_name}.
+        Extract the main subjects, entities, and technical terms from the user's question.
+        - Return ONLY a list of keywords separated by spaces.
+        - DO NOT write full sentences.
+        - DO NOT include conversational words (e.g., "please", "find", "search").
+        - Keep the keywords in the SAME language as the input (detected: {lang}).
+        - If the query mentions a specific name (like a medicine or a law), ensure it is the first keyword.
+
+        User Question: {query}
+        """
+
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0
+        )
+        # Очищаємо результат від зайвих знаків пунктуації, щоб не зламати SQL
+        rewritten = response.choices[0].message.content.strip()
+        rewritten = re.sub(r'[,.;:!?]', '', rewritten) 
+        return rewritten
+
+    except Exception as e:
+        print(f"LLM Rewrite Error: {e}")
+        return rewrite_query_no_llm(query)
+
+def rewrite_query_no_llm(query, max_keywords=8):
+    words = re.findall(r"\w+", query.lower(), re.UNICODE)
+    filtered = [w for w in words if w not in set(stopwords.words("english"))]
+    return " ".join(filtered[:max_keywords])

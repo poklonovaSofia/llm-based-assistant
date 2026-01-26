@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
 from app.rag_engine import get_rag_response
-from app.utils import rewrite_query_no_llm
+from app.utils import rewrite_query_with_llm
 from app.db import get_connection
 from app.ingest import process_single_file
 from fastapi import UploadFile, File
@@ -39,9 +39,11 @@ async def trigger_ingestion(agent_name: str, file: UploadFile = File(...)):
     
 @app.post("/ask")
 async def ask_question(request: QueryRequest):
-    rewritten = rewrite_query_no_llm(request.query)
-    answer = get_rag_response(request.query, rewritten, request.agent_name)
+    rewritten = rewrite_query_with_llm(request.query, request.agent_name)
+    print(f"DEBUG: Original: {request.query}")
+    print(f"DEBUG: Rewritten ({request.agent_name}): {rewritten}")
     
+    answer = get_rag_response(request.query, rewritten, request.agent_name)
     return {
         "agent": request.agent_name,
         "answer": answer
