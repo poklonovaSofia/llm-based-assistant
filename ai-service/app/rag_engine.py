@@ -15,14 +15,14 @@ def get_rag_response(original_query, rewritten_query, agent_name):
             cur.execute("""
                 SELECT content FROM documents 
                 WHERE agent_name = %s 
-                ORDER BY (1 - (embedding <=> %s::vector)) DESC LIMIT 20
+                ORDER BY (1 - (embedding <=> %s::vector)) DESC LIMIT 10
             """, (agent_name, query_embedding))
             vec_results = [row[0] for row in cur.fetchall()]
             cur.execute("""
                 SELECT content FROM documents 
                 WHERE agent_name = %s 
                 AND to_tsvector('simple', content) @@ to_tsquery('simple', %s)
-                ORDER BY ts_rank_cd(to_tsvector('simple', content), to_tsquery('simple', %s)) DESC LIMIT 20
+                ORDER BY ts_rank_cd(to_tsvector('simple', content), to_tsquery('simple', %s)) DESC LIMIT 10
             """, (agent_name, keywords, keywords))
             txt_results = [row[0] for row in cur.fetchall()]
 
@@ -57,7 +57,12 @@ def get_rag_response(original_query, rewritten_query, agent_name):
             messages=[
                 {
                     "role": "system", 
-                    "content": "You are a professional medical assistant. Answer STRICTLY using context."
+                    "content": (
+                            "You are a professional medical assistant. "
+                            "Answer STRICTLY using the provided context. "
+                            "Every chunk starts with [ENTITY NAME]. Focus ONLY on the entity mentioned in the question. "
+                            "If the context is about a different medicine, ignore it."
+                        )
                 },
                 {
                     "role": "user", 
