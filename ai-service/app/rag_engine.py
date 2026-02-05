@@ -6,10 +6,23 @@ embedder = SentenceTransformer("paraphrase-multilingual-MiniLM-L12-v2")
 reranker = CrossEncoder('mixedbread-ai/mxbai-rerank-base-v1')
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 client = OpenAI(api_key=OPENAI_API_KEY)
+def generate_hypothetical_answer(query):
+    prompt = (
+            f"Answer the medical question as if you are writing a professional leaflet summary. "
+            f"BE SPECIFIC about age groups, restrictions, and numbers if possible. "
+            f"Question: {query}"
+        )
+    response = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[{"role": "user", "content": prompt}],
+        temperature=0
+    )
+    return response.choices[0].message.content.strip()
 def get_rag_response(original_query, rewritten_query, agent_name):
-    query_embedding = embedder.encode(rewritten_query).tolist()
+    hypothetical_doc = generate_hypothetical_answer(original_query)
+    print(f"DEBUG HyDE: {hypothetical_doc[:100]}...")
+    query_embedding = embedder.encode(hypothetical_doc).tolist()
     keywords = " | ".join([w for w in rewritten_query.split() if w])
-
     with get_connection() as conn:
         with conn.cursor() as cur:
             cur.execute("""
@@ -43,7 +56,7 @@ def get_rag_response(original_query, rewritten_query, agent_name):
     rerank_scores = reranker.predict(pairs)
     
     reranked_results = sorted(zip(initial_contexts, rerank_scores), key=lambda x: x[1], reverse=True)
-    final_contexts = [res[0] for res in reranked_results[:5]]
+    final_contexts = [res[0] for res in reranked_results[:8]]
     print(f"DEBUG: Початково знайдено: {len(initial_contexts)}")
     print(f"DEBUG: ТОП-3 після Reranking:")
     for i, (txt, score) in enumerate(reranked_results[:3]):
