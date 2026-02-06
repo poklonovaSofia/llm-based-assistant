@@ -18,19 +18,22 @@ def generate_hypothetical_answer(query):
         temperature=0
     )
     return response.choices[0].message.content.strip()
-def get_rag_response(original_query, rewritten_query, agent_name):
+def _get_rag_core(original_query, rewritten_query, agent_name):
     hypothetical_doc = generate_hypothetical_answer(original_query)
-    print(f"DEBUG HyDE: {hypothetical_doc[:100]}...")
     query_embedding = embedder.encode(hypothetical_doc).tolist()
     keywords = " | ".join([w for w in rewritten_query.split() if w])
+    
     with get_connection() as conn:
         with conn.cursor() as cur:
+            # Векторний пошук
             cur.execute("""
                 SELECT content FROM documents 
                 WHERE agent_name = %s 
                 ORDER BY (1 - (embedding <=> %s::vector)) DESC LIMIT 10
             """, (agent_name, query_embedding))
             vec_results = [row[0] for row in cur.fetchall()]
+            
+            # Текстовий пошук
             cur.execute("""
                 SELECT content FROM documents 
                 WHERE agent_name = %s 
@@ -39,51 +42,45 @@ def get_rag_response(original_query, rewritten_query, agent_name):
             """, (agent_name, keywords, keywords))
             txt_results = [row[0] for row in cur.fetchall()]
 
-    k = 60
+    # RRF (Reciprocal Rank Fusion)
+    k = 20
     rrf_scores = {}
-
     for rank, doc in enumerate(vec_results):
         rrf_scores[doc] = rrf_scores.get(doc, 0) + 1 / (rank + k)
-
     for rank, doc in enumerate(txt_results):
         rrf_scores[doc] = rrf_scores.get(doc, 0) + 1 / (rank + k)
 
     fused_docs = sorted(rrf_scores.items(), key=lambda x: x[1], reverse=True)
     initial_contexts = [doc for doc, score in fused_docs[:40]]
 
-    # 4. ЕТАП РЕРАНКІНГУ (як і було)
+    # Реранкінг
     pairs = [[original_query, doc] for doc in initial_contexts]
     rerank_scores = reranker.predict(pairs)
-    
     reranked_results = sorted(zip(initial_contexts, rerank_scores), key=lambda x: x[1], reverse=True)
+    
+    # Вибираємо фінальні чанки
     final_contexts = [res[0] for res in reranked_results[:8]]
-    print(f"DEBUG: Початково знайдено: {len(initial_contexts)}")
-    print(f"DEBUG: ТОП-3 після Reranking:")
-    for i, (txt, score) in enumerate(reranked_results[:3]):
-        print(f"  Rank {i} (Score: {score:.4f}): {txt[:100]}...")
-
     combined_context = "\n\n".join(final_contexts)
 
-    try:
-        response = client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[
-                {
-                    "role": "system", 
-                    "content": (
-                            "You are a professional medical assistant. "
-                            "Answer STRICTLY using the provided context. "
-                            "Every chunk starts with [ENTITY NAME]. Focus ONLY on the entity mentioned in the question. "
-                            "If the context is about a different medicine, ignore it."
-                        )
-                },
-                {
-                    "role": "user", 
-                    "content": f"Context:\n{combined_context}\n\nQuestion: {original_query}"
-                }
-            ],
-            temperature=0
-        )
-        return response.choices[0].message.content.strip()
-    except Exception as e:
-        return f"OpenAI Error: {str(e)}"
+    # Генерація відповіді
+    response = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[
+            {"role": "system", "content": "You are a professional medical assistant. Answer STRICTLY using context..."},
+            {"role": "user", "content": f"Context:\n{combined_context}\n\nQuestion: {original_query}"}
+        ],
+        temperature=0
+    )
+    answer = response.choices[0].message.content.strip()
+    
+    # ПОВЕРТАЄМО І ВІДПОВІДЬ, І СПИСОК ЧАНКІВ
+    return answer, final_contexts
+
+# 2. Твоя стара функція для звичайного /ask (залишається БЕЗ ЗМІН для зовнішнього світу)
+def get_rag_response(original_query, rewritten_query, agent_name):
+    answer, _ = _get_rag_core(original_query, rewritten_query, agent_name)
+    return answer
+
+# 3. Нова функція спеціально для /evaluate-testset
+def get_rag_response_with_chunks(original_query, rewritten_query, agent_name):
+    return _get_rag_core(original_query, rewritten_query, agent_name)

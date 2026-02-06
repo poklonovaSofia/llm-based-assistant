@@ -68,3 +68,10 @@ def rewrite_query_no_llm(query, max_keywords=8):
     words = re.findall(r"\w+", query.lower(), re.UNICODE)
     filtered = [w for w in words if w not in set(stopwords.words("english"))]
     return " ".join(filtered[:max_keywords])
+def call_llm_directly(prompt: str):
+    response = client.chat.completions.create(
+        model="gpt-4o", # або gpt-4o для вищої якості
+        messages=[{"role": "user", "content": prompt}],
+        temperature=0.3 # Трохи вища температура для різноманітності питань
+    )
+    return response.choices[0].message.content
