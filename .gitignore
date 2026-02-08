@@ -17,3 +17,5 @@ dist/
 # Java
 target/
 *.log
+
+testnet.json
