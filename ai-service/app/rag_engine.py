@@ -43,7 +43,7 @@ def _get_rag_core(original_query, rewritten_query, agent_name):
             txt_results = [row[0] for row in cur.fetchall()]
 
     # RRF (Reciprocal Rank Fusion)
-    k = 20
+    k = 40
     rrf_scores = {}
     for rank, doc in enumerate(vec_results):
         rrf_scores[doc] = rrf_scores.get(doc, 0) + 1 / (rank + k)
@@ -69,7 +69,7 @@ def _get_rag_core(original_query, rewritten_query, agent_name):
             {"role": "system", "content": "You are a professional medical assistant. Answer STRICTLY using context..."},
             {"role": "user", "content": f"Context:\n{combined_context}\n\nQuestion: {original_query}"}
         ],
-        temperature=0
+        temperature=0.5
     )
     answer = response.choices[0].message.content.strip()
     
