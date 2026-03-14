@@ -2,11 +2,12 @@ import fitz, docx, mammoth, re
 
 import re
 import os
-from openai import OpenAI
 from langdetect import detect
 from nltk.corpus import stopwords
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-client = OpenAI(api_key=OPENAI_API_KEY)
+from app.llm_provider import llm_provider
+
+llm = llm_provider.get_llm()
+embeddings = llm_provider.get_embeddings()
 
 def extract_text(file_path):
     ext = file_path.lower()
@@ -39,6 +40,7 @@ def rewrite_query_with_llm(query, agent_name):
             lang = detect(query)
         except:
             lang = "sk"
+        
         prompt = f"""
         You are an expert assistant in the field of: {agent_name}.
         Extract the main subjects, entities, and technical terms from the user's question.
@@ -51,12 +53,9 @@ def rewrite_query_with_llm(query, agent_name):
         User Question: {query}
         """
 
-        response = client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[{"role": "user", "content": prompt}],
-            temperature=0
-        )
-        rewritten = response.choices[0].message.content.strip()
+        # Заміна на llm.invoke
+        response = llm.invoke(prompt)
+        rewritten = response.content.strip()
         rewritten = re.sub(r'[,.;:!?]', '', rewritten) 
         return rewritten
 
@@ -69,9 +68,6 @@ def rewrite_query_no_llm(query, max_keywords=8):
     filtered = [w for w in words if w not in set(stopwords.words("english"))]
     return " ".join(filtered[:max_keywords])
 def call_llm_directly(prompt: str):
-    response = client.chat.completions.create(
-        model="gpt-4o", # або gpt-4o для вищої якості
-        messages=[{"role": "user", "content": prompt}],
-        temperature=0.3 # Трохи вища температура для різноманітності питань
-    )
-    return response.choices[0].message.content
+    current_llm = llm_provider.get_llm()
+    response = current_llm.invoke(prompt)
+    return response.content.strip()

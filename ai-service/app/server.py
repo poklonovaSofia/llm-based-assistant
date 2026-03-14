@@ -7,16 +7,25 @@ from app.db import get_connection
 from app.db import get_random_chunks
 from app.ingest import process_single_file
 from app.utils import call_llm_directly
-from fastapi import UploadFile, File
+from fastapi import UploadFile, File, Form
 from ragas import evaluate
-from ragas.metrics import faithfulness, answer_relevancy, context_precision
+from ragas.metrics import answer_relevancy,  answer_correctness #,  context_precision, answer_correctness faithfulness,
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from datasets import Dataset
 from fastapi import Body
 import pandas as pd
 import json
 import os
-app = FastAPI(title="Medicine RAG API")
+from langchain_community.chat_models import ChatOllama
+from langchain_community.embeddings import OllamaEmbeddings
+from app.llm_provider import llm_provider
+from ragas.run_config import RunConfig
+from app.llm_provider import eval_llm_provider
+
+llm = llm_provider.get_llm()
+embeddings = llm_provider.get_embeddings()
+
+app = FastAPI(title="RAG API")
 
 
 class QueryRequest(BaseModel):
@@ -130,47 +139,91 @@ async def generate_testset(agent_name: str, num_questions: int = 5):
         return {"error": str(e)}
     
 @app.post("/evaluate-testset")
-async def evaluate_testset(agent_name: str, file: UploadFile = File(...)):
+async def evaluate_testset(
+    agent_name: str = Form(...), 
+    file: UploadFile = File(...),
+    compare_no_rag: str = Form("false")
+):
+    do_compare = compare_no_rag.lower() == "true"
     try:
-        # 1. Prečítanie JSON súboru
         content = await file.read()
-        testset = json.loads(content) # Premeníme obsah súboru na list
-        
-        evaluation_data = []
-        llm = ChatOpenAI(model="gpt-4o-mini")
-        embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
+        testset = json.loads(content)
+        # llm = ChatOpenAI(model="gpt-4o-mini")
+        # embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
 
-        # 2. Cyklus cez otázky (rovnaký ako predtým)
+        async def run_ragas_eval(data_list):
+            df = pd.DataFrame(data_list)
+            dataset = Dataset.from_pandas(df)
+            
+            # Додаємо answer_correctness завжди — вона працює без контексту
+            active_metrics = [
+                # faithfulness,
+                answer_relevancy,
+                answer_correctness   # ← ось тут додано
+            ]
+            
+            # context_precision тільки якщо є непорожні контексти
+            # if "contexts" in df.columns and df["contexts"].apply(lambda x: len(x) > 0).any():
+            #     active_metrics.append(context_precision)
+            config = RunConfig(timeout=3600, max_workers=1, max_retries=1)
+            res = evaluate(
+                dataset=dataset,
+                metrics=active_metrics,
+                llm=eval_llm_provider.get_llm(),        # ← було llm_provider.get_llm()
+                embeddings=eval_llm_provider.get_embeddings(), 
+                run_config=config
+            )
+            return {
+                "summary_scores": res,
+                "individual_results": res.to_pandas().to_dict(orient="records")
+            }
+
+        # 1. RAG evaluation (завжди)
+        rag_eval_data = []
         for item in testset:
             q = item["question"]
             gt = item["ground_truth"]
-
             rewritten = rewrite_query_with_llm(q, agent_name)
-            answer, chunks = get_rag_response_with_chunks(q, rewritten, agent_name)
-
-            evaluation_data.append({
+            print(rewritten)
+            answer, chunks = get_rag_response_with_chunks(q, rewritten, agent_name) #rewritten
+            rag_eval_data.append({
                 "question": q,
                 "answer": answer,
                 "contexts": chunks,
                 "ground_truth": gt
             })
+        
+        rag_results = await run_ragas_eval(rag_eval_data)
+        rag_df = pd.DataFrame(rag_results["individual_results"])
+        rag_df.to_csv("rag_results.csv", index=False)
+        # 2. No-RAG evaluation (якщо галочка)
+        if do_compare:
+            no_rag_data = []
+            for item in testset:
+                q = item["question"]
+                gt = item["ground_truth"]
+                no_rag_answer = call_llm_directly(f"Answer this medical question: {q}")
+                no_rag_data.append({
+                    "question": q,
+                    "answer": no_rag_answer,
+                    "contexts": [], 
+                    "ground_truth": gt
+                })
+            
+                
+            no_rag_results = await run_ragas_eval(no_rag_data)
+            no_rag_df = pd.DataFrame(no_rag_results["individual_results"])
+            no_rag_df.to_csv("no_rag_results.csv", index=False)
+        
+            return {
+                "rag": rag_results,
+                "no_rag": no_rag_results,
+                "compare": True
+            }
 
-        # 3. RAGAS evaluácia
-        df = pd.DataFrame(evaluation_data)
-        dataset = Dataset.from_pandas(df)
-        
-        result = evaluate(
-            dataset, 
-            metrics=[faithfulness, answer_relevancy, context_precision],
-            llm=llm,        # Priraďujeme model
-            embeddings=embeddings
-        )
-        
-        return {
-            "agent": agent_name,
-            "summary_scores": result,
-            "individual_results": result.to_pandas().to_dict(orient="records")
-        }
+        return rag_results
 
     except Exception as e:
-        return {"error": f"Chyba pri spracovaní súboru: {str(e)}"}
+        import traceback
+        print(traceback.format_exc())
+        return {"error": f"Error during evaluation: {str(e)}"}

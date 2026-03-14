@@ -1,29 +1,37 @@
 import os
-from openai import OpenAI
 from app.db import get_connection
 from app.utils import extract_text, chunk_text
 from sentence_transformers import SentenceTransformer
+from app.llm_provider import llm_provider
 
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-client = OpenAI(api_key=OPENAI_API_KEY)
 embedder = SentenceTransformer("paraphrase-multilingual-MiniLM-L12-v2")
 def get_document_subject(text):
     """
     Аналізує початок тексту та автоматично визначає головний об'єкт (Entity).
     Працює для ліків, законів, інструкцій тощо.
     """
-    header_context = text[:2000]
+    header_context = text[:3000]
     
     try:
-        response = client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[
-                {"role": "system", "content": "Identify the primary subject of this document (e.g., medicine name, law name, or product model). Output ONLY the name in 1-2 words. Example: 'FERANT' or 'Priligy' or 'Zákon 102'."},
-                {"role": "user", "content": f"Text fragment: {header_context}"}
-            ],
-            temperature=0
-        )
-        subject = response.choices[0].message.content.strip().upper()
+        prompt = f"""
+            Analyze the provided document fragment and identify its primary identity.
+            Guidelines:
+            1. If it's a periodic report, include the Title and Time Frame (e.g., 'Financial Report Q3 2024').
+            2. If it's a technical manual or recipe, include the Subject and Model/Type (e.g., 'Chocolate Cake Recipe' or 'Router XR-500').
+            3. If it's a legal act, include the ID and Year.
+            
+            Output ONLY a concise string (max 5 words) that uniquely identifies this document among others.
+            
+            Text: {header_context}
+            """
+        
+        # Беремо актуальний LLM з провайдера (OpenAI або Ollama)
+        current_llm = llm_provider.get_llm()
+        
+        # LangChain-стиль виклику
+        response = current_llm.invoke(prompt)
+        subject = response.content.strip().upper()
+        
         return subject
     except Exception as e:
         print(f"Error identifying subject: {e}")
