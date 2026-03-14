@@ -19,3 +19,5 @@ target/
 *.log
 
 testnet.json
+
+public
