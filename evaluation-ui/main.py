@@ -3,7 +3,8 @@ import os
 from dotenv import load_dotenv
 from nicegui import ui, events
 import asyncio
-
+import json
+from datetime import datetime
 load_dotenv()
 BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:8000")
 
@@ -103,6 +104,8 @@ def main_page():
                         .classes('text-xl font-medium text-gray-600')
 
             result = await evaluate_testset(agent, content, compare_no_rag.value)
+            with open(f"eval_result_{agent}_{datetime.now().strftime('%H%M')}.json", "w", encoding="utf-8") as f:
+                json.dump(result, f, ensure_ascii=False, indent=2)
             result_area.clear()
             def clean_nan(obj):
                 if isinstance(obj, list):

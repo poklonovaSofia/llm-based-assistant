@@ -21,3 +21,7 @@ target/
 testnet.json
 
 public
+
+/evaluation-ui
+
+testnet*

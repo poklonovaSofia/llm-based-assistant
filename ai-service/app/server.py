@@ -9,19 +9,17 @@ from app.ingest import process_single_file
 from app.utils import call_llm_directly
 from fastapi import UploadFile, File, Form
 from ragas import evaluate
-from ragas.metrics import answer_relevancy,  answer_correctness #,  context_precision, answer_correctness faithfulness,
-from langchain_openai import ChatOpenAI, OpenAIEmbeddings
+from ragas.metrics import answer_relevancy, answer_correctness, context_precision, faithfulness
 from datasets import Dataset
 from fastapi import Body
 import pandas as pd
 import json
 import os
-from langchain_community.chat_models import ChatOllama
-from langchain_community.embeddings import OllamaEmbeddings
 from app.llm_provider import llm_provider
 from ragas.run_config import RunConfig
 from app.llm_provider import eval_llm_provider
-
+import math
+from app.utils import call_eval_llm_directly
 llm = llm_provider.get_llm()
 embeddings = llm_provider.get_embeddings()
 
@@ -56,7 +54,34 @@ async def trigger_ingestion(agent_name: str, file: UploadFile = File(...)):
         return {"message": f"File {filename} ingested for agent {agent_name}"}
     except Exception as e:
         return {"error": str(e)}
-    
+@app.post("/ingest-multiple")
+async def trigger_ingestion_multiple(agent_name: str, files: list[UploadFile] = File(...)):
+    try:
+        results = []
+        for file in files:
+            content = await file.read()
+            filename = file.filename
+            
+            temp_path = f"temp_{filename}"
+            with open(temp_path, "wb") as f:
+                f.write(content)
+            
+            try:
+                process_single_file(agent_name, temp_path, filename)
+                results.append({"file": filename, "status": "success"})
+            except Exception as e:
+                results.append({"file": filename, "status": "error", "error": str(e)})
+            finally:
+                if os.path.exists(temp_path):
+                    os.remove(temp_path)
+        
+        return {
+            "agent": agent_name,
+            "processed": len(results),
+            "results": results
+        }
+    except Exception as e:
+        return {"error": str(e)}
 @app.post("/ask")
 async def ask_question(request: QueryRequest):
     rewritten = rewrite_query_with_llm(request.query, request.agent_name)
@@ -111,22 +136,26 @@ async def generate_testset(agent_name: str, num_questions: int = 5):
 
         INSTRUCTIONS:
         1. Generate {num_questions} questions that can be answered ONLY using the provided context.
-        2. If the context mentions specific rules, medications (like Sinupret), or dates, focus on them.
-        3. DO NOT use your internal knowledge to invent facts, medications, or dosages not present in the text.
-        4. If the context is insufficient to create a good question, use only what is available.
-        5. Both questions and ground_truth must be in Slovak language.
+        2. Focus on specific facts: names, values, dates, conditions, procedures mentioned in the text.
+        3. DO NOT use your internal knowledge to invent facts not present in the text.
+        4. Both questions and ground_truth must be in Slovak language.
+        5. ground_truth must be a COMPLETE answer — include ALL relevant details from the context.
+        Do NOT write one-word answers. Minimum 2 sentences.
+        6. Ask SPECIFIC questions with ONE clear answer — prefer:
+        "Aká je dávka X?", "Čo obsahuje Y?", "Kedy sa má užívať Z?", "Aké sú príznaky X?"
+        AVOID broad questions like "Čo treba vedieť o X?" which have many valid answers.
 
         OUTPUT FORMAT:
         Return ONLY a valid JSON list of objects:
         [
-        {{"question": "Slovak question", "ground_truth": "Slovak answer from text"}},
+        {{"question": "Slovak question", "ground_truth": "Complete detailed Slovak answer"}},
         ...
         ]
         """
-        
+                
         # 3. Викликаємо твій LLM utils (наприклад, через ту ж функцію, що і rewrite)
   # Треба додати в utils.py
-        raw_response = call_llm_directly(prompt)
+        raw_response = call_eval_llm_directly(prompt)
         
         # Очищуємо відповідь від можливих ```json ... ```
 
@@ -156,15 +185,15 @@ async def evaluate_testset(
             dataset = Dataset.from_pandas(df)
             
             # Додаємо answer_correctness завжди — вона працює без контексту
+            answer_correctness.weights = [0.4, 0.6]
             active_metrics = [
-                # faithfulness,
+                faithfulness,
                 answer_relevancy,
                 answer_correctness   # ← ось тут додано
             ]
-            
-            # context_precision тільки якщо є непорожні контексти
-            # if "contexts" in df.columns and df["contexts"].apply(lambda x: len(x) > 0).any():
-            #     active_metrics.append(context_precision)
+            # answer_correctness.weights = [0.4, 0.6]
+            if "contexts" in df.columns and df["contexts"].apply(lambda x: len(x) > 0).any():
+                active_metrics.append(context_precision)
             config = RunConfig(timeout=3600, max_workers=1, max_retries=1)
             res = evaluate(
                 dataset=dataset,
@@ -173,14 +202,22 @@ async def evaluate_testset(
                 embeddings=eval_llm_provider.get_embeddings(), 
                 run_config=config
             )
+            df_result = res.to_pandas().fillna(0.0)
+
+            summary = {}
+            for col in df_result.columns:
+                if col not in ["user_input", "retrieved_contexts", "response", "reference"]:
+                    val = float(df_result[col].mean())
+                    summary[col] = 0.0 if (math.isnan(val) or math.isinf(val)) else val
+
             return {
-                "summary_scores": res,
-                "individual_results": res.to_pandas().to_dict(orient="records")
+                "summary_scores": summary,
+                "individual_results": df_result.to_dict(orient="records")
             }
 
         # 1. RAG evaluation (завжди)
         rag_eval_data = []
-        for item in testset:
+        for i, item in enumerate(testset):
             q = item["question"]
             gt = item["ground_truth"]
             rewritten = rewrite_query_with_llm(q, agent_name)
@@ -192,6 +229,8 @@ async def evaluate_testset(
                 "contexts": chunks,
                 "ground_truth": gt
             })
+            pd.DataFrame(rag_eval_data).to_csv(f"rag_progress_{agent_name}.csv", index=False)
+            print(f"[{i+1}/{len(testset)}] save in rag_progress_{agent_name}.csv")
         
         rag_results = await run_ragas_eval(rag_eval_data)
         rag_df = pd.DataFrame(rag_results["individual_results"])
@@ -202,7 +241,7 @@ async def evaluate_testset(
             for item in testset:
                 q = item["question"]
                 gt = item["ground_truth"]
-                no_rag_answer = call_llm_directly(f"Answer this medical question: {q}")
+                no_rag_answer = call_llm_directly(f"Answer the following question: {q}")
                 no_rag_data.append({
                     "question": q,
                     "answer": no_rag_answer,

@@ -2,7 +2,7 @@ import os
 from app.db import get_connection
 from app.utils import extract_text, chunk_text
 from sentence_transformers import SentenceTransformer
-from app.llm_provider import llm_provider
+from app.llm_provider import entity_llm
 
 embedder = SentenceTransformer("paraphrase-multilingual-MiniLM-L12-v2")
 def get_document_subject(text):
@@ -14,19 +14,21 @@ def get_document_subject(text):
     
     try:
         prompt = f"""
-            Analyze the provided document fragment and identify its primary identity.
-            Guidelines:
-            1. If it's a periodic report, include the Title and Time Frame (e.g., 'Financial Report Q3 2024').
-            2. If it's a technical manual or recipe, include the Subject and Model/Type (e.g., 'Chocolate Cake Recipe' or 'Router XR-500').
-            3. If it's a legal act, include the ID and Year.
-            
-            Output ONLY a concise string (max 5 words) that uniquely identifies this document among others.
-            
-            Text: {header_context}
-            """
+        Analyze the provided document fragment and identify its primary subject.
+
+        Rules:
+        - Output ONLY a concise string of maximum 5 words
+        - The string must uniquely identify this specific document
+        - Include the most distinctive identifiers present in the document 
+        (e.g. name, ID, date, version, period — whatever is most relevant)
+        - Do NOT explain, do NOT add punctuation, do NOT use quotes
+        - Output in the same language as the document
+
+        Text: {header_context}
+        """
         
         # Беремо актуальний LLM з провайдера (OpenAI або Ollama)
-        current_llm = llm_provider.get_llm()
+        current_llm = entity_llm
         
         # LangChain-стиль виклику
         response = current_llm.invoke(prompt)

@@ -5,7 +5,8 @@ import os
 from langdetect import detect
 from nltk.corpus import stopwords
 from app.llm_provider import llm_provider
-
+from app.llm_provider import rewrite_llm
+from app.llm_provider import eval_llm_provider
 llm = llm_provider.get_llm()
 embeddings = llm_provider.get_embeddings()
 
@@ -43,18 +44,21 @@ def rewrite_query_with_llm(query, agent_name):
         
         prompt = f"""
         You are an expert assistant in the field of: {agent_name}.
-        Extract the main subjects, entities, and technical terms from the user's question.
-        - Return ONLY a list of keywords separated by spaces.
-        - DO NOT write full sentences.
-        - DO NOT include conversational words (e.g., "please", "find", "search").
-        - Keep the keywords in the SAME language as the input (detected: {lang}).
-        - If the query mentions a specific name (like a medicine or a law), ensure it is the first keyword.
+        The input language is: {lang}
+        You MUST respond in the SAME language as the question.
 
-        User Question: {query}
-        """
+        Rephrase the question into a shorter, more searchable form.
+        Keep all technical terms, names, and identifiers exact.
+        Preserve the relationships between terms.
+        Keep it concise but preserve the meaning.
+        Maximum 10 words.
+        Return ONLY the rephrased query, nothing else.
+
+        Question: {query}
+        Rephrased:"""
 
         # Заміна на llm.invoke
-        response = llm.invoke(prompt)
+        response = rewrite_llm.invoke(prompt)
         rewritten = response.content.strip()
         rewritten = re.sub(r'[,.;:!?]', '', rewritten) 
         return rewritten
@@ -70,4 +74,7 @@ def rewrite_query_no_llm(query, max_keywords=8):
 def call_llm_directly(prompt: str):
     current_llm = llm_provider.get_llm()
     response = current_llm.invoke(prompt)
+    return response.content.strip()
+def call_eval_llm_directly(prompt: str):
+    response = eval_llm_provider.get_llm().invoke(prompt)
     return response.content.strip()

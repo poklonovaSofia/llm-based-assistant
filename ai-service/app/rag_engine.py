@@ -3,28 +3,32 @@ from sentence_transformers import SentenceTransformer, CrossEncoder
 embedder = SentenceTransformer("paraphrase-multilingual-MiniLM-L12-v2")
 reranker = CrossEncoder('mixedbread-ai/mxbai-rerank-base-v1')
 from app.llm_provider import llm_provider
+from app.llm_provider import rewrite_llm
+import re
 
 llm = llm_provider.get_llm()
 embeddings = llm_provider.get_embeddings()
 def generate_hypothetical_answer(query, agent_name):
     prompt = (
-            f"You are an expert assistant for '{agent_name}'. "
-            f"Provide a detailed, professional, and factual hypothetical answer to the following question. "
-            f"Be specific with technical details, numbers, and dates if applicable. "
-            f"Answer in the same language as the question. "
-            f"Question: {query}"
-        )
-    current_llm = llm_provider.get_llm()
+        f"You are an expert assistant for '{agent_name}'. "
+        f"Write a SHORT hypothetical answer (2-3 sentences maximum) to this question. "
+        f"Be specific and factual. "
+        f"You MUST answer in Slovak language only. "
+        f"Do not repeat yourself. "
+        f"Question: {query}"
+    )
+    current_llm = rewrite_llm
     
     # LangChain-стиль виклику (працює і для ChatOpenAI, і для ChatOllama)
     response = current_llm.invoke(prompt)
     return response.content.strip()
 def _get_rag_core(original_query, rewritten_query, agent_name):
-    # hypothetical_doc = generate_hypothetical_answer(original_query, agent_name)
-    # print(f"--- FULL HYDE DOC ---\n{hypothetical_doc}\n---------------------")
-    # query_embedding = embedder.encode(hypothetical_doc).tolist()
-    query_embedding = embedder.encode(rewritten_query).tolist()
-    keywords = " | ".join([w for w in rewritten_query.split() if w])# todo &
+    hypothetical_doc = generate_hypothetical_answer(original_query, agent_name)
+    print(f"--- FULL HYDE DOC ---\n{hypothetical_doc}\n---------------------")
+    query_embedding = embedder.encode(hypothetical_doc).tolist()
+    # query_embedding = embedder.encode(rewritten_query).tolist()
+    # keywords = " | ".join([w for w in rewritten_query.split() if w])# todo &
+    keywords = " | ".join([w for w in rewritten_query.split() if len(w) > 3])
     #keywords = " & ".join([w for w in rewritten_query.split() if len(w) > 2])
     with get_connection() as conn:
         with conn.cursor() as cur:
@@ -56,7 +60,30 @@ def _get_rag_core(original_query, rewritten_query, agent_name):
         rrf_scores[doc] = rrf_scores.get(doc, 0) + 1 / (rank + k)
 
     fused_docs = sorted(rrf_scores.items(), key=lambda x: x[1], reverse=True)
-    initial_contexts = [doc for doc, score in fused_docs[:10]]
+
+    # Витягуємо entity з питання — беремо слова в дужках з топ чанку
+    # або просто фільтруємо по overlap entity між чанками
+    top_entities = {}
+    for doc, score in fused_docs[:10]:
+        # Entity зберігається як [ENTITY NAME] на початку чанку
+        entity_match = re.match(r'\[([^\]]+)\]', doc)
+        if entity_match:
+            entity = entity_match.group(1)
+            top_entities[entity] = top_entities.get(entity, 0) + score
+
+    # Беремо найбільш релевантну entity
+    dominant_entity = max(top_entities, key=top_entities.get) if top_entities else None
+    print(f"DEBUG: Dominant entity: {dominant_entity}")
+
+    # Фільтруємо — спочатку чанки з домінантною entity, потім решта
+    if dominant_entity:
+        primary = [(doc, score) for doc, score in fused_docs[:10] 
+                if dominant_entity in doc]
+        secondary = [(doc, score) for doc, score in fused_docs[:10] 
+                    if dominant_entity not in doc]
+        initial_contexts = [doc for doc, score in (primary + secondary)[:10]]
+    else:
+        initial_contexts = [doc for doc, score in fused_docs[:10]]
 
     # Реранкінг
     pairs = [[original_query, doc] for doc in initial_contexts]
@@ -70,15 +97,21 @@ def _get_rag_core(original_query, rewritten_query, agent_name):
     system_prompt = (
         f"You are a professional assistant for '{agent_name}'. "
         f"Your ONLY source of truth is the provided context. "
-        f"Ignore any previous knowledge or hypothetical scenarios. "
-        f"If the context says the vulnerability is about 'data types', "
-        f"then that is the only correct answer, even if you think otherwise."
+        f"First identify what the question asks for, "
+        f"then extract ALL relevant information from the context, "
+        f"then formulate a complete answer. "
+        f"Respond in the same language as the question. "
+        f"If the answer is not in the context, say you do not have enough information."
     )
     # Додай це перед відправкою в LLM
     print("--- FINAL CONTEXT SENT TO LLM ---")
     print(combined_context)
     print("---------------------------------")
-    user_message = f"Context:\n{combined_context}\n\nQuestion: {original_query}"
+    user_message = (
+    f"Context:\n{combined_context}\n\n"
+    f"Question: {original_query}\n\n"
+    f"Provide a complete and accurate answer based solely on the context above."
+    )
     current_llm = llm_provider.get_llm()
     
     # LangChain-стиль (messages для чат-моделей)
