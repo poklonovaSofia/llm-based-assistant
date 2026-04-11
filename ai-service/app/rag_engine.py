@@ -60,30 +60,30 @@ def _get_rag_core(original_query, rewritten_query, agent_name):
         rrf_scores[doc] = rrf_scores.get(doc, 0) + 1 / (rank + k)
 
     fused_docs = sorted(rrf_scores.items(), key=lambda x: x[1], reverse=True)
+    initial_contexts = [doc for doc, score in fused_docs[:20]]
+    # # Витягуємо entity з питання — беремо слова в дужках з топ чанку
+    # # або просто фільтруємо по overlap entity між чанками
+    # top_entities = {}
+    # for doc, score in fused_docs[:10]:
+    #     # Entity зберігається як [ENTITY NAME] на початку чанку
+    #     entity_match = re.match(r'\[([^\]]+)\]', doc)
+    #     if entity_match:
+    #         entity = entity_match.group(1)
+    #         top_entities[entity] = top_entities.get(entity, 0) + score
 
-    # Витягуємо entity з питання — беремо слова в дужках з топ чанку
-    # або просто фільтруємо по overlap entity між чанками
-    top_entities = {}
-    for doc, score in fused_docs[:10]:
-        # Entity зберігається як [ENTITY NAME] на початку чанку
-        entity_match = re.match(r'\[([^\]]+)\]', doc)
-        if entity_match:
-            entity = entity_match.group(1)
-            top_entities[entity] = top_entities.get(entity, 0) + score
+    # # Беремо найбільш релевантну entity
+    # dominant_entity = max(top_entities, key=top_entities.get) if top_entities else None
+    # print(f"DEBUG: Dominant entity: {dominant_entity}")
 
-    # Беремо найбільш релевантну entity
-    dominant_entity = max(top_entities, key=top_entities.get) if top_entities else None
-    print(f"DEBUG: Dominant entity: {dominant_entity}")
-
-    # Фільтруємо — спочатку чанки з домінантною entity, потім решта
-    if dominant_entity:
-        primary = [(doc, score) for doc, score in fused_docs[:10] 
-                if dominant_entity in doc]
-        secondary = [(doc, score) for doc, score in fused_docs[:10] 
-                    if dominant_entity not in doc]
-        initial_contexts = [doc for doc, score in (primary + secondary)[:10]]
-    else:
-        initial_contexts = [doc for doc, score in fused_docs[:10]]
+    # # Фільтруємо — спочатку чанки з домінантною entity, потім решта
+    # if dominant_entity:
+    #     primary = [(doc, score) for doc, score in fused_docs[:10] 
+    #             if dominant_entity in doc]
+    #     secondary = [(doc, score) for doc, score in fused_docs[:10] 
+    #                 if dominant_entity not in doc]
+    #     initial_contexts = [doc for doc, score in (primary + secondary)[:10]]
+    # else:
+    #     initial_contexts = [doc for doc, score in fused_docs[:10]]
 
     # Реранкінг
     pairs = [[original_query, doc] for doc in initial_contexts]
@@ -97,9 +97,9 @@ def _get_rag_core(original_query, rewritten_query, agent_name):
     system_prompt = (
         f"You are a professional assistant for '{agent_name}'. "
         f"Your ONLY source of truth is the provided context. "
-        f"First identify what the question asks for, "
-        f"then extract ALL relevant information from the context, "
-        f"then formulate a complete answer. "
+        f"Answer strictly based on the context. "
+        f"Provide a COMPLETE answer — include all relevant details, values, and conditions from the context. "
+        f"Do not give one-sentence answers if more information is available. "
         f"Respond in the same language as the question. "
         f"If the answer is not in the context, say you do not have enough information."
     )
@@ -108,9 +108,9 @@ def _get_rag_core(original_query, rewritten_query, agent_name):
     print(combined_context)
     print("---------------------------------")
     user_message = (
-    f"Context:\n{combined_context}\n\n"
-    f"Question: {original_query}\n\n"
-    f"Provide a complete and accurate answer based solely on the context above."
+        f"Context:\n{combined_context}\n\n"
+        f"Question: {original_query}\n\n"
+        f"Odpovedaj kompletne a presne len na základe kontextu vyššie. Odpovedaj v slovenčine."
     )
     current_llm = llm_provider.get_llm()
     

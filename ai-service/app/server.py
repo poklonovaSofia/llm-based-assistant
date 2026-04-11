@@ -184,8 +184,8 @@ async def evaluate_testset(
             df = pd.DataFrame(data_list)
             dataset = Dataset.from_pandas(df)
             
-            # Додаємо answer_correctness завжди — вона працює без контексту
-            answer_correctness.weights = [0.4, 0.6]
+            # # Додаємо answer_correctness завжди — вона працює без контексту
+            # answer_correctness.weights = [0.4, 0.6]
             active_metrics = [
                 faithfulness,
                 answer_relevancy,
