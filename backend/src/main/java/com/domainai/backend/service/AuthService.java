@@ -6,11 +6,10 @@ import com.domainai.backend.dto.RegisterRequest;
 import com.domainai.backend.models.User;
 import com.domainai.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-
-import java.time.LocalDateTime;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -18,44 +17,50 @@ public class AuthService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final JwtService jwtService;
+    private final AuthenticationManager authenticationManager;
+
     public AuthResponse register(RegisterRequest request) {
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new RuntimeException("User with this email already exists");
         }
+
         User user = User.builder()
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .fullName(request.getFullName())
-                .createdAt(LocalDateTime.now())
                 .build();
 
         userRepository.save(user);
-        AuthResponse response = new AuthResponse();
-        response.setEmail(user.getEmail());
-        response.setFullName(user.getFullName());
-        response.setMessage("User registered successfully");
-        response.setToken("fake-jwt-token-" + System.currentTimeMillis());
 
-        return response;
+        String token = jwtService.generateToken(user.getEmail());
+
+        return AuthResponse.builder()
+                .token(token)
+                .email(user.getEmail())
+                .fullName(user.getFullName())
+                .message("User registered successfully")
+                .build();
     }
+
     public AuthResponse login(LoginRequest request) {
-        Optional<User> userOpt = userRepository.findByEmail(request.getEmail());
+        authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(
+                        request.getEmail(),
+                        request.getPassword()
+                )
+        );
 
-        if (userOpt.isEmpty()) {
-            throw new RuntimeException("Invalid email or password");
-        }
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new RuntimeException("User not found"));
 
-        User user = userOpt.get();
-        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-            throw new RuntimeException("Invalid email or password");
-        }
+        String token = jwtService.generateToken(user.getEmail());
 
-        AuthResponse response = new AuthResponse();
-        response.setEmail(user.getEmail());
-        response.setFullName(user.getFullName());
-        response.setMessage("Login successful");
-        response.setToken("fake-jwt-token-" + System.currentTimeMillis());
-
-        return response;
+        return AuthResponse.builder()
+                .token(token)
+                .email(user.getEmail())
+                .fullName(user.getFullName())
+                .message("Login successful")
+                .build();
     }
 }
