@@ -3,7 +3,7 @@ package com.domainai.backend.service;
 import com.domainai.backend.dto.AuthResponse;
 import com.domainai.backend.dto.LoginRequest;
 import com.domainai.backend.dto.RegisterRequest;
-import com.domainai.backend.entity.User;
+import com.domainai.backend.models.User;
 import com.domainai.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;

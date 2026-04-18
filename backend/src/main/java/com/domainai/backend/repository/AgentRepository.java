@@ -1,7 +1,7 @@
 package com.domainai.backend.repository;
 
-import com.domainai.backend.entity.Agent;
-import com.domainai.backend.entity.User;
+import com.domainai.backend.models.Agent;
+import com.domainai.backend.models.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

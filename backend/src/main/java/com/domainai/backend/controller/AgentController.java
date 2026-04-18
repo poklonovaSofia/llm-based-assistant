@@ -1,9 +1,9 @@
 package com.domainai.backend.controller;
 
 import com.domainai.backend.dto.agent.AgentRequest;
-import com.domainai.backend.dto.agent.AgentRequest;
-import com.domainai.backend.entity.Agent;
-import com.domainai.backend.entity.User;
+import com.domainai.backend.dto.agent.AgentResponse;
+import com.domainai.backend.models.Agent;
+import com.domainai.backend.models.User;
 import com.domainai.backend.service.AgentService;
 import com.domainai.backend.service.UserService;
 import jakarta.validation.Valid;
@@ -24,7 +24,7 @@ public class AgentController {
     private final UserService userService;
 
     @PostMapping
-    public ResponseEntity<AgentRequest> createAgent(
+    public ResponseEntity<AgentResponse> createAgent(
             @Valid @RequestBody AgentRequest request,
             Authentication authentication) {
 
@@ -42,11 +42,11 @@ public class AgentController {
     }
 
     @GetMapping("/my")
-    public ResponseEntity<List<AgentRequest>> getMyAgents(Authentication authentication) {
+    public ResponseEntity<List<AgentResponse>> getMyAgents(Authentication authentication) {
         User currentUser = userService.getCurrentUser(authentication.getName());
         List<Agent> agents = agentService.getAgentsByUser(currentUser);
 
-        List<AgentRequest> dtos = agents.stream()
+        List<AgentResponse> dtos = agents.stream()
                 .map(this::mapToDto)
                 .toList();
 
@@ -54,9 +54,9 @@ public class AgentController {
     }
 
     @GetMapping("/public")
-    public ResponseEntity<List<AgentRequest>> getPublicAgents() {
+    public ResponseEntity<List<AgentResponse>> getPublicAgents() {
         List<Agent> agents = agentService.getPublicAgents();
-        List<AgentRequest> dtos = agents.stream()
+        List<AgentResponse> dtos = agents.stream()
                 .map(this::mapToDto)
                 .toList();
 
@@ -64,14 +64,13 @@ public class AgentController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<AgentRequest> getAgentById(@PathVariable Long id) {
+    public ResponseEntity<AgentResponse> getAgentById(@PathVariable Long id) {
         Agent agent = agentService.getAgentById(id);
         return ResponseEntity.ok(mapToDto(agent));
     }
 
-    // Jednoduché mapovanie
-    private AgentRequest mapToDto(Agent agent) {
-        return AgentRequest.builder()
+    private AgentResponse mapToDto(Agent agent) {
+        return AgentResponse.builder()
                 .id(agent.getId())
                 .name(agent.getName())
                 .description(agent.getDescription())

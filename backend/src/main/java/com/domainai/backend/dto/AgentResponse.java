@@ -1,10 +1,6 @@
 package com.domainai.backend.dto.agent;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
+import lombok.*;
 import java.time.LocalDateTime;
 
 @Data
@@ -12,7 +8,6 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 public class AgentResponse {
-
     private Long id;
     private String name;
     private String description;

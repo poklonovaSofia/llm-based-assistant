@@ -1,4 +1,4 @@
-package com.domainai.backend.entity;
+package com.domainai.backend.models;
 
 import jakarta.persistence.*;
 import lombok.*;

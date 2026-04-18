@@ -1,7 +1,7 @@
 package com.domainai.backend.service;
 
-import com.domainai.backend.entity.Agent;
-import com.domainai.backend.entity.User;
+import com.domainai.backend.models.Agent;
+import com.domainai.backend.models.User;
 import com.domainai.backend.repository.AgentRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

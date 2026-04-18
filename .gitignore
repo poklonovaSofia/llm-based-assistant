@@ -25,3 +25,6 @@ public
 /evaluation-ui
 
 testnet*
+### Secrets ###
+backend/src/main/resources/application.properties
+ 
