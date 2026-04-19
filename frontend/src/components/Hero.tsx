@@ -1,31 +1,33 @@
-// src/components/Hero.tsx
+// Hero.tsx
 export const Hero = () => {
   return (
-    <div className="bg-[#2c1810] text-white py-28 relative overflow-hidden">
+    <div className="py-16 border-b-2 border-violet-100">
       <div className="max-w-5xl mx-auto text-center px-6">
-        {/* Тег зверху */}
-        <div className="mb-6 inline-flex items-center gap-3 bg-white/10 backdrop-blur-md px-6 py-2 rounded-full text-sm tracking-widest">
-          PRIVATE BY DEFAULT • SHARE WHEN READY
+
+        <div className="mb-6 inline-flex items-center gap-2 bg-gradient-to-r from-violet-500 to-pink-500 text-white text-xs font-bold px-5 py-2 rounded-full tracking-widest shadow-lg shadow-violet-200">
+          ✦ PRIVATE BY DEFAULT • SHARE WHEN READY
         </div>
 
-        <h1 className="text-7xl font-bold leading-none mb-6 tracking-tighter">
+        <h1 className="text-5xl font-bold leading-tight mb-4 text-gray-900 tracking-tight">
           Your Personal Library<br />
-          of Domain Agents
+          <span className="bg-gradient-to-r from-violet-500 to-pink-500 bg-clip-text text-transparent">
+            of Domain Agents
+          </span>
         </h1>
 
-        <p className="text-2xl text-[#f4d9b8] max-w-3xl mx-auto mb-12 leading-tight">
-          Create specialized AI experts that know <span className="font-medium">only</span> what you teach them.<br />
-          Keep them completely private - or share with others.
+        <p className="text-base text-gray-500 max-w-2xl mx-auto mb-8 leading-relaxed">
+          Create specialized AI experts that know <span className="font-bold text-gray-900">only</span> what you teach them.
+          Keep them completely private — or share with others.
         </p>
 
-        <div className="flex gap-5 justify-center">
-          <button 
+        <div className="flex gap-4 justify-center">
+          <button
             onClick={() => window.location.href = '/create-agent'}
-            className="bg-[#f4d9b8] hover:bg-white text-[#2c1810] px-14 py-5 rounded-2xl font-semibold text-lg transition-all shadow-xl"
+            className="bg-gradient-to-r from-violet-500 to-pink-500 hover:from-violet-600 hover:to-pink-600 text-white px-10 py-3.5 rounded-2xl font-bold text-sm transition-all shadow-lg shadow-violet-200"
           >
             Build Your Agent
           </button>
-          <button className="border-2 border-[#f4d9b8] text-[#f4d9b8] hover:bg-white hover:text-[#2c1810] px-12 py-5 rounded-2xl font-medium text-lg transition-all">
+          <button className="border-2 border-violet-400 text-violet-600 hover:bg-violet-50 px-10 py-3.5 rounded-2xl font-bold text-sm transition-all">
             Browse Shared Agents
           </button>
         </div>

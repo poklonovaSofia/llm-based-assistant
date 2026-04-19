@@ -10,7 +10,7 @@ import UploadDocuments from './pages/UploadDocuments';
 function App() {
   return (
     <Router>
-      <div className="min-h-screen bg-[#f8f1e9] font-serif">
+      <div className="min-h-screen bg-gradient-to-br from-violet-50 via-white to-pink-50 font-serif">
         <Navbar />
 
         <Routes>
