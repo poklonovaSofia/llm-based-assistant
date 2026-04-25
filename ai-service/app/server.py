@@ -20,11 +20,18 @@ from ragas.run_config import RunConfig
 from app.llm_provider import eval_llm_provider
 import math
 from app.utils import call_eval_llm_directly
+from fastapi.middleware.cors import CORSMiddleware
 llm = llm_provider.get_llm()
 embeddings = llm_provider.get_embeddings()
 
 app = FastAPI(title="RAG API")
-
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 class QueryRequest(BaseModel):
     query: str
