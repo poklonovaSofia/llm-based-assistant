@@ -33,7 +33,7 @@ export default function CreateAgent() {
         throw new Error(data.message || 'Failed to create agent');
       }
 
-      navigate(`/upload/${data.id}`);
+      navigate(`/upload/${data.id}`, { state: { agentName: form.name } });
 
     } catch (err: any) {
       setError(err.message);
