@@ -16,6 +16,46 @@ export default function MyAgents() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
+  const [agentDocuments, setAgentDocuments] = useState<Record<number, string[]>>({});
+  const [expandedAgent, setExpandedAgent] = useState<number | null>(null);
+
+  const fetchDocuments = async (agentId: number) => {
+    if (expandedAgent === agentId) {
+      setExpandedAgent(null);
+      return;
+    }
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`http://localhost:8080/api/documents/${agentId}`, {
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setAgentDocuments(prev => ({ ...prev, [agentId]: data }));
+        setExpandedAgent(agentId);
+      }
+    } catch {
+      // ignore
+    }
+  };
+
+  const deleteDocument = async (agentId: number, filename: string) => {
+    try {
+      const token = localStorage.getItem('token');
+      await fetch(`http://localhost:8080/api/documents/${agentId}/${filename}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+      setAgentDocuments(prev => ({
+        ...prev,
+        [agentId]: prev[agentId].filter(f => f !== filename),
+      }));
+    } catch {
+      // ignore
+    }
+  };
+  
+
   useEffect(() => {
     const fetchAgents = async () => {
       try {
@@ -106,10 +146,10 @@ export default function MyAgents() {
               )}
               <div className="flex items-center gap-3 mt-4">
                 <button
-                  onClick={(e) => { e.stopPropagation(); navigate(`/upload/${agent.id}`); }}
+                  onClick={(e) => { e.stopPropagation(); navigate(`/agent/${agent.id}`); }}
                   className="text-xs font-bold text-violet-500 hover:text-violet-700 transition"
                 >
-                  + Add docs
+                  Edit →
                 </button>
                 <button
                   onClick={(e) => { e.stopPropagation(); navigate(`/chat/${agent.id}`); }}
@@ -118,6 +158,26 @@ export default function MyAgents() {
                   Chat →
                 </button>
               </div>
+
+              {expandedAgent === agent.id && (
+                <div className="mt-3 border-t border-gray-100 pt-3 space-y-2">
+                  {agentDocuments[agent.id]?.length === 0 ? (
+                    <p className="text-xs text-gray-400">No documents yet</p>
+                  ) : (
+                    agentDocuments[agent.id]?.map((filename) => (
+                      <div key={filename} className="flex items-center justify-between">
+                        <span className="text-xs text-gray-600 truncate">{filename}</span>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); deleteDocument(agent.id, filename); }}
+                          className="text-xs text-red-400 hover:text-red-600 transition ml-2 flex-shrink-0"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    ))
+                  )}
+                </div>
+              )}
             </div>
           ))}
         </div>

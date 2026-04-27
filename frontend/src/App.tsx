@@ -8,6 +8,7 @@ import CreateAccount from './pages/CreateAccount';
 import CreateAgent from './pages/CreateAgent';
 import UploadDocuments from './pages/UploadDocuments';
 import MyAgents from './pages/MyAgents';
+import AgentDetails from './pages/AgentDetails';
 function App() {
   return (
     <Router>
@@ -25,6 +26,7 @@ function App() {
           <Route path="/create-agent" element={<CreateAgent />} />
           <Route path="/upload/:agentId" element={<UploadDocuments />} />
           <Route path="/my-agents" element={<MyAgents />} />
+          <Route path="/agent/:agentId" element={<AgentDetails />} />
         </Routes>
       </div>
     </Router>
