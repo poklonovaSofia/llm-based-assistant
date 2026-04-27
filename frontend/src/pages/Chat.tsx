@@ -44,7 +44,60 @@ export default function Chat() {
     };
     fetchAgent();
   }, [agentId]);
-
+  useEffect(() => {
+    const fetchHistory = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`http://localhost:8080/api/chat/${agentId}/history`, {
+          headers: { 'Authorization': `Bearer ${token}` },
+        });
+        if (response.ok) {
+          const data = await response.json();
+          if (data.length > 0) {
+            const loaded: Message[] = data.flatMap((m: any) => [
+              {
+                id: m.id,
+                role: 'user' as const,
+                content: m.question,
+                timestamp: new Date(m.createdAt),
+              },
+              {
+                id: m.id + 0.5,
+                role: 'assistant' as const,
+                content: m.answer,
+                timestamp: new Date(m.createdAt),
+              },
+            ]);
+            setMessages(loaded);
+          } else {
+            setMessages([
+              {
+                id: 1,
+                role: 'assistant',
+                content: 'Ahoj! Som váš špecializovaný agent. Opýtajte sa ma čokoľvek na základe nahratých dokumentov.',
+                timestamp: new Date(),
+              },
+              {
+                id: 2,
+                role: 'user',
+                content: 'Aké sú vedľajšie účinky lieku Noliprel?',
+                timestamp: new Date(),
+              },
+              {
+                id: 3,
+                role: 'assistant',
+                content: 'Podľa dokumentácie, medzi časté vedľajšie účinky Noliprelu patrí suchý kašeľ, bolesti hlavy a závraty.',
+                timestamp: new Date(),
+              },
+            ]);
+          }
+        }
+      } catch {
+        // ignore
+      }
+    };
+    fetchHistory();
+  }, [agentId]);
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
@@ -75,16 +128,14 @@ export default function Chat() {
       const token = localStorage.getItem('token');
 
       // POST to Spring which proxies to LangChain /ask
-      const response = await fetch(`http://localhost:8080/api/agents/${agentId}/ask`, {
+      const response = await fetch(`http://localhost:8080/api/chat/${agentId}/message`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify({ query: userMessage.content }),
+        body: JSON.stringify({ question: userMessage.content }),
       });
-
-      if (!response.ok) throw new Error('Failed to get answer');
 
       const data = await response.json();
 
@@ -154,61 +205,62 @@ export default function Chat() {
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-4 py-6 space-y-4">
-        {messages.length === 0 && (
-          <div className="flex flex-col items-center justify-center h-full text-center">
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-violet-500 to-pink-500 mb-4 flex items-center justify-center">
-              <span className="text-white text-2xl">✦</span>
+      <div className="flex-1 overflow-y-auto px-4 py-6">
+        <div className="max-w-4xl mx-auto space-y-4">
+          {messages.length === 0 && (
+            <div className="flex flex-col items-center justify-center h-full text-center">
+              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-violet-500 to-pink-500 mb-4 flex items-center justify-center">
+                <span className="text-white text-2xl">✦</span>
+              </div>
+              <h2 className="text-lg font-bold text-gray-900 mb-1">
+                {agent?.name ?? `Agent #${agentId}`}
+              </h2>
+              <p className="text-sm text-gray-400 max-w-xs">
+                Ask anything based on this agent's documents.
+              </p>
             </div>
-            <h2 className="text-lg font-bold text-gray-900 mb-1">
-              {agent?.name ?? `Agent #${agentId}`}
-            </h2>
-            <p className="text-sm text-gray-400 max-w-xs">
-              Ask anything based on this agent's documents.
-            </p>
-          </div>
-        )}
+          )}
 
-        {messages.map((message) => (
-          <div
-            key={message.id}
-            className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
-          >
-            {message.role === 'assistant' && (
+          {messages.map((message) => (
+            <div
+              key={message.id}
+              className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+            >
+              {message.role === 'assistant' && (
+                <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-violet-500 to-pink-500 flex-shrink-0 mr-2 mt-1" />
+              )}
+              <div className={`max-w-[75%] ${message.role === 'user' ? 'items-end' : 'items-start'} flex flex-col gap-1`}>
+                <div
+                  className={`px-4 py-3 rounded-2xl text-sm leading-relaxed ${
+                    message.role === 'user'
+                      ? 'bg-gradient-to-br from-violet-500 to-pink-500 text-white rounded-br-sm'
+                      : 'bg-white border-2 border-gray-100 text-gray-800 rounded-bl-sm shadow-sm'
+                  }`}
+                >
+                  {message.content}
+                </div>
+                <span className="text-xs text-gray-300 px-1">
+                  {formatTime(message.timestamp)}
+                </span>
+              </div>
+            </div>
+          ))}
+
+          {loading && (
+            <div className="flex justify-start">
               <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-violet-500 to-pink-500 flex-shrink-0 mr-2 mt-1" />
-            )}
-            <div className={`max-w-[75%] ${message.role === 'user' ? 'items-end' : 'items-start'} flex flex-col gap-1`}>
-              <div
-                className={`px-4 py-3 rounded-2xl text-sm leading-relaxed ${
-                  message.role === 'user'
-                    ? 'bg-gradient-to-br from-violet-500 to-pink-500 text-white rounded-br-sm'
-                    : 'bg-white border-2 border-gray-100 text-gray-800 rounded-bl-sm shadow-sm'
-                }`}
-              >
-                {message.content}
-              </div>
-              <span className="text-xs text-gray-300 px-1">
-                {formatTime(message.timestamp)}
-              </span>
-            </div>
-          </div>
-        ))}
-
-        {/* Loading bubble */}
-        {loading && (
-          <div className="flex justify-start">
-            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-violet-500 to-pink-500 flex-shrink-0 mr-2 mt-1" />
-            <div className="bg-white border-2 border-gray-100 rounded-2xl rounded-bl-sm px-4 py-3 shadow-sm">
-              <div className="flex gap-1 items-center h-4">
-                <span className="w-2 h-2 bg-violet-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                <span className="w-2 h-2 bg-pink-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                <span className="w-2 h-2 bg-violet-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+              <div className="bg-white border-2 border-gray-100 rounded-2xl rounded-bl-sm px-4 py-3 shadow-sm">
+                <div className="flex gap-1 items-center h-4">
+                  <span className="w-2 h-2 bg-violet-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                  <span className="w-2 h-2 bg-pink-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                  <span className="w-2 h-2 bg-violet-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
 
-        <div ref={messagesEndRef} />
+          <div ref={messagesEndRef} />
+        </div>
       </div>
 
       {/* Input */}
