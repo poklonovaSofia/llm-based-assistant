@@ -80,4 +80,39 @@ public class AgentController {
                 .updatedAt(agent.getUpdatedAt())
                 .build();
     }
+    @PutMapping("/{id}")
+    public ResponseEntity<AgentResponse> updateAgent(
+            @PathVariable Long id,
+            @Valid @RequestBody AgentRequest request,
+            Authentication authentication) {
+
+        User currentUser = userService.getCurrentUser(authentication.getName());
+        Agent agent = agentService.getAgentById(id);
+
+        if (!agent.getCreator().getId().equals(currentUser.getId())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
+        agent.setName(request.getName());
+        agent.setDescription(request.getDescription());
+        agent.setPublic(request.isPublic());
+
+        Agent updated = agentService.createAgent(agent);
+        return ResponseEntity.ok(mapToDto(updated));
+    }
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteAgent(
+            @PathVariable Long id,
+            Authentication authentication) {
+
+        User currentUser = userService.getCurrentUser(authentication.getName());
+        Agent agent = agentService.getAgentById(id);
+
+        if (!agent.getCreator().getId().equals(currentUser.getId())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
+        agentService.deleteAgent(id);
+        return ResponseEntity.ok().build();
+    }
 }
