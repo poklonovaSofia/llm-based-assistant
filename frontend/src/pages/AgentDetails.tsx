@@ -223,7 +223,7 @@ export default function AgentDetails() {
             ✦ DOCUMENTS
           </div>
           <button
-            onClick={() => navigate(`/upload/${agentId}`)}
+            onClick={() => navigate(`/upload/${agentId}`, { state: { agentName: agent?.name, isEditing: true } })}
             className="text-xs font-bold text-violet-500 hover:text-violet-700 border-2 border-violet-200 hover:border-violet-400 px-3 py-1.5 rounded-lg transition"
           >
             + Add docs

@@ -10,7 +10,7 @@ export default function UploadDocuments() {
   const [uploading, setUploading] = useState(false);
   const [uploadedCount, setUploadedCount] = useState(0);
   const [error, setError] = useState('');
-
+  const isEditing = !!(location.state as any)?.isEditing;
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     const dropped = Array.from(e.dataTransfer.files).filter(f => f.type === 'application/pdf');
@@ -64,12 +64,19 @@ const handleFinish = async () => {
 
         {/* Header */}
         <div className="mb-8">
-          <div className="inline-flex items-center gap-2 bg-gradient-to-r from-violet-500 to-pink-500 text-white text-xs font-bold px-3 py-1 rounded-full mb-3">
-            ✦ STEP 2 OF 2
-          </div>
-          <h1 className="text-2xl font-bold text-gray-900">Upload Documents</h1>
+          {!isEditing && (
+            <div className="inline-flex items-center gap-2 bg-gradient-to-r from-violet-500 to-pink-500 text-white text-xs font-bold px-3 py-1 rounded-full mb-3">
+              ✦ STEP 2 OF 2
+            </div>
+          )}
+          <h1 className="text-2xl font-bold text-gray-900">
+            {isEditing ? 'Add Documents' : 'Upload Documents'}
+          </h1>
           <p className="text-sm text-gray-400 mt-1">
-            Add PDFs to train your agent <span className="text-violet-500 font-medium">"{agentName}"</span>
+            {isEditing 
+              ? <>Adding documents to <span className="text-violet-500 font-medium">"{agentName}"</span></>
+              : <>Train your agent <span className="text-violet-500 font-medium">"{agentName}"</span></>
+            }
           </p>
         </div>
 
@@ -140,16 +147,18 @@ const handleFinish = async () => {
           disabled={files.length === 0 || uploading}
           className="w-full bg-gradient-to-r from-violet-500 to-pink-500 hover:from-violet-600 hover:to-pink-600 text-white py-3 rounded-xl font-bold text-sm transition disabled:opacity-40 shadow-lg shadow-violet-200"
         >
-          {uploading ? `Processing... (${uploadedCount}/${files.length})` : `Upload & Finish →`}
+          {uploading ? `Processing...` : isEditing ? 'Add Documents →' : 'Upload & Finish →'}
         </button>
 
         {/* Skip */}
-        <button
-          onClick={() => navigate(`/chat/${agentId}`)}
-          className="w-full mt-2 text-xs text-gray-400 hover:text-gray-600 transition py-2"
-        >
-          Skip for now
-        </button>
+        {!isEditing && (
+          <button
+            onClick={() => navigate(`/chat/${agentId}`)}
+            className="w-full mt-2 text-xs text-gray-400 hover:text-gray-600 transition py-2"
+          >
+            Skip for now
+          </button>
+        )}
 
       </div>
     </div>

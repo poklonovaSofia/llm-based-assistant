@@ -9,6 +9,7 @@ import CreateAgent from './pages/CreateAgent';
 import UploadDocuments from './pages/UploadDocuments';
 import MyAgents from './pages/MyAgents';
 import AgentDetails from './pages/AgentDetails';
+import { ProtectedRoute } from './components/ProtectedRoute';
 function App() {
   return (
     <Router>
@@ -16,17 +17,15 @@ function App() {
         <Navbar />
 
         <Routes>
-          {/* Головна сторінка */}
           <Route path="/" element={<Home />} />
-
-          {/* Сторінка чату (коли клікаєш на картку агента) */}
-          <Route path="/chat/:agentId" element={<Chat />} />
           <Route path="/signin" element={<SignIn />} />
           <Route path="/create-account" element={<CreateAccount />} />
-          <Route path="/create-agent" element={<CreateAgent />} />
-          <Route path="/upload/:agentId" element={<UploadDocuments />} />
-          <Route path="/my-agents" element={<MyAgents />} />
-          <Route path="/agent/:agentId" element={<AgentDetails />} />
+          
+          <Route path="/chat/:agentId" element={<ProtectedRoute><Chat /></ProtectedRoute>} />
+          <Route path="/create-agent" element={<ProtectedRoute><CreateAgent /></ProtectedRoute>} />
+          <Route path="/upload/:agentId" element={<ProtectedRoute><UploadDocuments /></ProtectedRoute>} />
+          <Route path="/my-agents" element={<ProtectedRoute><MyAgents /></ProtectedRoute>} />
+          <Route path="/agent/:agentId" element={<ProtectedRoute><AgentDetails /></ProtectedRoute>} />
         </Routes>
       </div>
     </Router>
