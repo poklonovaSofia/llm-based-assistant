@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { Sparkles, FileText, BookOpen, X, ArrowRight } from 'lucide-react';
 
 export default function UploadDocuments() {
   const { agentId } = useParams<{ agentId: string }>();
@@ -66,7 +67,7 @@ const handleFinish = async () => {
         <div className="mb-8">
           {!isEditing && (
             <div className="inline-flex items-center gap-2 bg-gradient-to-r from-violet-500 to-pink-500 text-white text-xs font-bold px-3 py-1 rounded-full mb-3">
-              ✦ STEP 2 OF 2
+              <Sparkles size={12} /> STEP 2 OF 2
             </div>
           )}
           <h1 className="text-2xl font-bold text-gray-900">
@@ -93,7 +94,7 @@ const handleFinish = async () => {
           onDrop={handleDrop}
           className="border-2 border-dashed border-violet-200 rounded-2xl p-10 text-center hover:border-violet-400 transition-all bg-white mb-4"
         >
-          <div className="text-4xl mb-3">📄</div>
+          <FileText size={40} className="mx-auto mb-3 text-violet-300" />
           <p className="text-sm font-semibold text-gray-700">Drop PDF files here</p>
           <p className="text-xs text-gray-400 mt-1 mb-4">or click to browse</p>
           <label className="cursor-pointer inline-flex items-center gap-2 bg-gradient-to-r from-violet-500 to-pink-500 text-white text-xs font-bold px-4 py-2 rounded-full hover:opacity-90 transition">
@@ -117,17 +118,14 @@ const handleFinish = async () => {
                 className="flex items-center justify-between px-4 py-3 border-b border-gray-50 last:border-0"
               >
                 <div className="flex items-center gap-3">
-                  <span className="text-xl">📘</span>
+                  <BookOpen size={20} className="text-violet-400 flex-shrink-0" />
                   <div>
                     <p className="text-sm font-medium text-gray-800">{file.name}</p>
                     <p className="text-xs text-gray-400">{(file.size / 1024 / 1024).toFixed(1)} MB</p>
                   </div>
                 </div>
-                <button
-                  onClick={() => removeFile(index)}
-                  className="text-xs text-red-400 hover:text-red-600 font-medium transition"
-                >
-                  Remove
+                <button onClick={() => removeFile(index)} className="inline-flex items-center gap-1 text-xs text-red-400 hover:text-red-600 font-medium transition">
+                  <X size={12} /> Remove
                 </button>
               </div>
             ))}
@@ -145,9 +143,15 @@ const handleFinish = async () => {
         <button
           onClick={handleFinish}
           disabled={files.length === 0 || uploading}
-          className="w-full bg-gradient-to-r from-violet-500 to-pink-500 hover:from-violet-600 hover:to-pink-600 text-white py-3 rounded-xl font-bold text-sm transition disabled:opacity-40 shadow-lg shadow-violet-200"
+          className="w-full inline-flex items-center justify-center gap-2 bg-gradient-to-r from-violet-500 to-pink-500 hover:from-violet-600 hover:to-pink-600 text-white py-3 rounded-xl font-bold text-sm transition disabled:opacity-40 shadow-lg shadow-violet-200"
         >
-          {uploading ? `Processing...` : isEditing ? 'Add Documents →' : 'Upload & Finish →'}
+          {uploading ? (
+            'Processing...'
+          ) : isEditing ? (
+            <><span>Add Documents</span><ArrowRight size={15} /></>
+          ) : (
+            <><span>Upload & Finish</span><ArrowRight size={15} /></>
+          )}
         </button>
 
         {/* Skip */}
