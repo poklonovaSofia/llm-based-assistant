@@ -1,6 +1,12 @@
 import { useNavigate } from 'react-router-dom';
 
-export const AgentCard = ({ id, name, domain }: any) => {
+interface AgentCardProps {
+  id: number;
+  name: string;
+  description: string;
+}
+
+export const AgentCard = ({ id, name, description }: AgentCardProps) => {
   const navigate = useNavigate();
 
   return (
@@ -10,8 +16,8 @@ export const AgentCard = ({ id, name, domain }: any) => {
     >
       <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-violet-500 to-pink-500 flex-shrink-0 group-hover:scale-110 transition-transform duration-300" />
       <div>
-        <p className="text-xs font-bold text-violet-400 uppercase tracking-wider mb-0.5">{domain}</p>
         <h3 className="font-bold text-gray-900 text-sm group-hover:text-violet-500 transition-colors">{name}</h3>
+        <p className="text-xs text-gray-400 mt-0.5 line-clamp-2">{description}</p>
       </div>
     </div>
   );

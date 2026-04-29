@@ -1,5 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import {
+  Sparkles, ArrowLeft, Pencil, Trash2, Lock, Globe,
+  FileText, Plus, MessageCircle, ArrowRight, X, Save
+} from 'lucide-react';
 
 interface Agent {
   id: number;
@@ -106,9 +110,9 @@ export default function AgentDetails() {
 
       <button
         onClick={() => navigate('/my-agents')}
-        className="text-sm text-gray-400 hover:text-violet-500 font-bold transition mb-6 block"
+        className="inline-flex items-center gap-1 text-sm text-gray-400 hover:text-violet-500 font-bold transition mb-6"
       >
-        ← Back to My Agents
+        <ArrowLeft size={15} /> Back to My Agents
       </button>
 
       {error && (
@@ -121,20 +125,20 @@ export default function AgentDetails() {
       <div className="bg-white border-2 border-gray-100 rounded-2xl p-6 mb-6">
         <div className="flex items-start justify-between mb-4">
           <div className="inline-flex items-center gap-2 bg-gradient-to-r from-violet-500 to-pink-500 text-white text-xs font-bold px-3 py-1 rounded-full">
-            ✦ AGENT INFO
+            <Sparkles size={12} /> AGENT INFO
           </div>
           <div className="flex gap-2">
             <button
               onClick={() => setEditing(!editing)}
-              className="text-xs font-bold text-violet-500 hover:text-violet-700 border-2 border-violet-200 hover:border-violet-400 px-3 py-1.5 rounded-lg transition"
+              className="inline-flex items-center gap-1 text-xs font-bold text-violet-500 hover:text-violet-700 border-2 border-violet-200 hover:border-violet-400 px-3 py-1.5 rounded-lg transition"
             >
-              {editing ? 'Cancel' : 'Edit'}
+              {editing ? <><X size={12} /> Cancel</> : <><Pencil size={12} /> Edit</>}
             </button>
             <button
               onClick={handleDelete}
-              className="text-xs font-bold text-red-400 hover:text-red-600 border-2 border-red-200 hover:border-red-400 px-3 py-1.5 rounded-lg transition"
+              className="inline-flex items-center gap-1 text-xs font-bold text-red-400 hover:text-red-600 border-2 border-red-200 hover:border-red-400 px-3 py-1.5 rounded-lg transition"
             >
-              Delete
+              <Trash2 size={12} /> Delete
             </button>
           </div>
         </div>
@@ -167,29 +171,29 @@ export default function AgentDetails() {
                 <button
                   type="button"
                   onClick={() => setForm({ ...form, isPublic: false })}
-                  className={`px-4 py-2 rounded-xl text-xs font-bold transition border-2 ${
+                  className={`inline-flex items-center gap-1 px-4 py-2 rounded-xl text-xs font-bold transition border-2 ${
                     !form.isPublic ? 'bg-gray-900 text-white border-gray-900' : 'bg-white border-gray-200 text-gray-500'
                   }`}
                 >
-                  🔒 Private
+                  <Lock size={11} /> Private
                 </button>
                 <button
                   type="button"
                   onClick={() => setForm({ ...form, isPublic: true })}
-                  className={`px-4 py-2 rounded-xl text-xs font-bold transition border-2 ${
+                  className={`inline-flex items-center gap-1 px-4 py-2 rounded-xl text-xs font-bold transition border-2 ${
                     form.isPublic ? 'bg-gradient-to-r from-orange-400 to-pink-500 text-white border-transparent' : 'bg-white border-gray-200 text-gray-500'
                   }`}
                 >
-                  🌐 Public
+                  <Globe size={11} /> Public
                 </button>
               </div>
             </div>
             <button
               onClick={handleSave}
               disabled={saving}
-              className="w-full bg-gradient-to-r from-violet-500 to-pink-500 text-white py-2.5 rounded-xl font-bold text-sm transition disabled:opacity-50 shadow-lg shadow-violet-200"
+              className="inline-flex items-center justify-center gap-2 w-full bg-gradient-to-r from-violet-500 to-pink-500 text-white py-2.5 rounded-xl font-bold text-sm transition disabled:opacity-50 shadow-lg shadow-violet-200"
             >
-              {saving ? 'Saving...' : 'Save Changes'}
+              <Save size={15} /> {saving ? 'Saving...' : 'Save Changes'}
             </button>
           </div>
         ) : (
@@ -206,10 +210,10 @@ export default function AgentDetails() {
             )}
             <div>
               <p className="text-xs text-gray-400 uppercase tracking-wider font-bold mb-1">Visibility</p>
-              <span className={`text-xs font-bold px-2 py-1 rounded-full ${
+              <span className={`inline-flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-full ${
                 agent?.isPublic ? 'bg-orange-100 text-orange-600' : 'bg-gray-100 text-gray-500'
               }`}>
-                {agent?.isPublic ? '🌐 Public' : '🔒 Private'}
+                {agent?.isPublic ? <><Globe size={11} /> Public</> : <><Lock size={11} /> Private</>}
               </span>
             </div>
           </div>
@@ -220,13 +224,13 @@ export default function AgentDetails() {
       <div className="bg-white border-2 border-gray-100 rounded-2xl p-6 mb-6">
         <div className="flex items-center justify-between mb-4">
           <div className="inline-flex items-center gap-2 bg-gradient-to-r from-violet-500 to-pink-500 text-white text-xs font-bold px-3 py-1 rounded-full">
-            ✦ DOCUMENTS
+            <Sparkles size={12} /> DOCUMENTS
           </div>
           <button
             onClick={() => navigate(`/upload/${agentId}`, { state: { agentName: agent?.name, isEditing: true } })}
-            className="text-xs font-bold text-violet-500 hover:text-violet-700 border-2 border-violet-200 hover:border-violet-400 px-3 py-1.5 rounded-lg transition"
+            className="inline-flex items-center gap-1 text-xs font-bold text-violet-500 hover:text-violet-700 border-2 border-violet-200 hover:border-violet-400 px-3 py-1.5 rounded-lg transition"
           >
-            + Add docs
+            <Plus size={12} /> Add docs
           </button>
         </div>
 
@@ -236,12 +240,15 @@ export default function AgentDetails() {
           <div className="space-y-2">
             {documents.map((filename) => (
               <div key={filename} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
-                <span className="text-sm text-gray-700 truncate">📄 {filename}</span>
+                <span className="inline-flex items-center gap-1.5 text-sm text-gray-700 truncate">
+                  <FileText size={13} className="text-gray-400 flex-shrink-0" />
+                  {filename}
+                </span>
                 <button
                   onClick={() => handleDeleteDoc(filename)}
-                  className="text-xs text-red-400 hover:text-red-600 transition ml-2 flex-shrink-0 font-bold"
+                  className="inline-flex items-center gap-1 text-xs text-red-400 hover:text-red-600 transition ml-2 flex-shrink-0 font-bold"
                 >
-                  Delete
+                  <Trash2 size={12} /> Delete
                 </button>
               </div>
             ))}
@@ -252,9 +259,9 @@ export default function AgentDetails() {
       {/* Actions */}
       <button
         onClick={() => navigate(`/chat/${agentId}`)}
-        className="w-full bg-gradient-to-r from-violet-500 to-pink-500 hover:from-violet-600 hover:to-pink-600 text-white py-3 rounded-xl font-bold text-sm transition shadow-lg shadow-violet-200"
+        className="inline-flex items-center justify-center gap-2 w-full bg-gradient-to-r from-violet-500 to-pink-500 hover:from-violet-600 hover:to-pink-600 text-white py-3 rounded-xl font-bold text-sm transition shadow-lg shadow-violet-200"
       >
-        Open Chat →
+        <MessageCircle size={15} /> Open Chat <ArrowRight size={15} />
       </button>
     </div>
   );

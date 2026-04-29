@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { ArrowLeft, Plus, Send, Sparkles } from 'lucide-react';
 
 interface Message {
   id: number;
@@ -171,16 +172,16 @@ export default function Chat() {
     date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
   return (
-    <div className="flex flex-col h-screen bg-gradient-to-br from-violet-50 via-white to-pink-50">
+    <div className="flex flex-col h-[calc(100vh-74px)] bg-gradient-to-br from-violet-50 via-white to-pink-50">
 
       {/* Header */}
-      <div className="bg-white border-b border-gray-100 px-6 py-4 flex items-center gap-4 shadow-sm">
-        <button
-          onClick={() => navigate('/my-agents')}
-          className="text-gray-400 hover:text-violet-500 transition text-sm font-bold"
-        >
-          ← Back
-        </button>
+        <div className="sticky top-0 z-10 bg-white border-b border-gray-100 px-6 py-4 flex items-center gap-4 shadow-sm">
+          <button
+            onClick={() => navigate('/my-agents')}
+            className="inline-flex items-center gap-1 text-gray-400 hover:text-violet-500 transition text-sm font-bold"
+          >
+            <ArrowLeft size={15} /> Back
+          </button>
         <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-violet-500 to-pink-500 flex-shrink-0" />
         <div className="flex-1 min-w-0">
           {agentLoading ? (
@@ -197,10 +198,10 @@ export default function Chat() {
           )}
         </div>
         <button
-          onClick={() => navigate(`/upload/${agentId}`)}
-          className="text-xs font-bold text-violet-500 hover:text-violet-700 transition border-2 border-violet-200 hover:border-violet-400 px-3 py-1.5 rounded-lg"
+          onClick={() => navigate(`/upload/${agentId}`, { state: { agentName: agent?.name, isEditing: true } })}
+          className="inline-flex items-center gap-1 text-xs font-bold text-violet-500 hover:text-violet-700 transition border-2 border-violet-200 hover:border-violet-400 px-3 py-1.5 rounded-lg"
         >
-          + Add docs
+          <Plus size={12} /> Add docs
         </button>
       </div>
 
@@ -210,7 +211,7 @@ export default function Chat() {
           {messages.length === 0 && (
             <div className="flex flex-col items-center justify-center h-full text-center">
               <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-violet-500 to-pink-500 mb-4 flex items-center justify-center">
-                <span className="text-white text-2xl">✦</span>
+                <Sparkles className="text-white" size={28} />
               </div>
               <h2 className="text-lg font-bold text-gray-900 mb-1">
                 {agent?.name ?? `Agent #${agentId}`}
@@ -282,10 +283,7 @@ export default function Chat() {
             disabled={!input.trim() || loading}
             className="w-11 h-11 rounded-xl bg-gradient-to-br from-violet-500 to-pink-500 text-white flex items-center justify-center flex-shrink-0 hover:from-violet-600 hover:to-pink-600 transition disabled:opacity-40 disabled:cursor-not-allowed shadow-lg shadow-violet-200"
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="22" y1="2" x2="11" y2="13" />
-              <polygon points="22 2 15 22 11 13 2 9 22 2" />
-            </svg>
+            <Send size={16} />
           </button>
         </div>
         <p className="text-center text-xs text-gray-300 mt-2">

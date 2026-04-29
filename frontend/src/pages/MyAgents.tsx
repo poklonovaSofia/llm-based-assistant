@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Sparkles, Plus, Globe, Lock, ArrowRight, MessageCircle, Pencil, Trash2, FileText } from 'lucide-react';
 
 interface Agent {
   id: number;
@@ -54,7 +55,6 @@ export default function MyAgents() {
       // ignore
     }
   };
-  
 
   useEffect(() => {
     const fetchAgents = async () => {
@@ -89,16 +89,16 @@ export default function MyAgents() {
       <div className="flex items-center justify-between mb-8">
         <div>
           <div className="inline-flex items-center gap-2 bg-gradient-to-r from-violet-500 to-pink-500 text-white text-xs font-bold px-3 py-1 rounded-full mb-2">
-            ✦ MY LIBRARY
+            <Sparkles size={12} /> MY LIBRARY
           </div>
           <h1 className="text-2xl font-bold text-gray-900">My Agents</h1>
           <p className="text-sm text-gray-400 mt-1">Your private knowledge library</p>
         </div>
         <button
           onClick={() => navigate('/create-agent')}
-          className="bg-gradient-to-r from-violet-500 to-pink-500 text-white px-5 py-2.5 rounded-xl text-sm font-bold hover:from-violet-600 hover:to-pink-600 transition shadow-lg shadow-violet-200"
+          className="inline-flex items-center gap-2 bg-gradient-to-r from-violet-500 to-pink-500 text-white px-5 py-2.5 rounded-xl text-sm font-bold hover:from-violet-600 hover:to-pink-600 transition shadow-lg shadow-violet-200"
         >
-          + New Agent
+          <Plus size={15} /> New Agent
         </button>
       </div>
 
@@ -115,9 +115,9 @@ export default function MyAgents() {
           <p className="text-gray-400 text-sm mb-4">No agents yet</p>
           <button
             onClick={() => navigate('/create-agent')}
-            className="bg-gradient-to-r from-violet-500 to-pink-500 text-white px-6 py-2.5 rounded-xl text-sm font-bold transition shadow-lg shadow-violet-200"
+            className="inline-flex items-center gap-2 bg-gradient-to-r from-violet-500 to-pink-500 text-white px-6 py-2.5 rounded-xl text-sm font-bold transition shadow-lg shadow-violet-200"
           >
-            Create your first agent
+            <Plus size={15} /> Create your first agent
           </button>
         </div>
       ) : (
@@ -130,12 +130,12 @@ export default function MyAgents() {
             >
               <div className="flex items-start justify-between mb-3">
                 <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-pink-500 flex-shrink-0" />
-                <span className={`text-xs font-bold px-2 py-1 rounded-full ${
+                <span className={`inline-flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-full ${
                   agent.isPublic
                     ? 'bg-orange-100 text-orange-600'
                     : 'bg-gray-100 text-gray-500'
                 }`}>
-                  {agent.isPublic ? '🌐 Public' : '🔒 Private'}
+                  {agent.isPublic ? <><Globe size={11} /> Public</> : <><Lock size={11} /> Private</>}
                 </span>
               </div>
               <h3 className="font-bold text-gray-900 group-hover:text-violet-500 transition-colors">
@@ -147,15 +147,15 @@ export default function MyAgents() {
               <div className="flex items-center gap-3 mt-4">
                 <button
                   onClick={(e) => { e.stopPropagation(); navigate(`/agent/${agent.id}`); }}
-                  className="text-xs font-bold text-violet-500 hover:text-violet-700 transition"
+                  className="inline-flex items-center gap-1 text-xs font-bold text-violet-500 hover:text-violet-700 transition"
                 >
-                  Edit →
+                  <Pencil size={12} /> Edit
                 </button>
                 <button
                   onClick={(e) => { e.stopPropagation(); navigate(`/chat/${agent.id}`); }}
-                  className="text-xs font-bold text-pink-500 hover:text-pink-700 transition"
+                  className="inline-flex items-center gap-1 text-xs font-bold text-pink-500 hover:text-pink-700 transition"
                 >
-                  Chat →
+                  <MessageCircle size={12} /> Chat
                 </button>
               </div>
 
@@ -166,12 +166,15 @@ export default function MyAgents() {
                   ) : (
                     agentDocuments[agent.id]?.map((filename) => (
                       <div key={filename} className="flex items-center justify-between">
-                        <span className="text-xs text-gray-600 truncate">{filename}</span>
+                        <span className="inline-flex items-center gap-1 text-xs text-gray-600 truncate">
+                          <FileText size={11} className="flex-shrink-0 text-gray-400" />
+                          {filename}
+                        </span>
                         <button
                           onClick={(e) => { e.stopPropagation(); deleteDocument(agent.id, filename); }}
-                          className="text-xs text-red-400 hover:text-red-600 transition ml-2 flex-shrink-0"
+                          className="inline-flex items-center gap-1 text-xs text-red-400 hover:text-red-600 transition ml-2 flex-shrink-0"
                         >
-                          Delete
+                          <Trash2 size={12} /> Delete
                         </button>
                       </div>
                     ))

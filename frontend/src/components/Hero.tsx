@@ -1,11 +1,12 @@
-// Hero.tsx
+import { Sparkles, Plus, Search } from 'lucide-react';
+
 export const Hero = () => {
   return (
     <div className="py-16 border-b-2 border-violet-100">
       <div className="max-w-5xl mx-auto text-center px-6">
 
         <div className="mb-6 inline-flex items-center gap-2 bg-gradient-to-r from-violet-500 to-pink-500 text-white text-xs font-bold px-5 py-2 rounded-full tracking-widest shadow-lg shadow-violet-200">
-          ✦ PRIVATE BY DEFAULT • SHARE WHEN READY
+          <Sparkles size={12} /> PRIVATE BY DEFAULT • SHARE WHEN READY
         </div>
 
         <h1 className="text-5xl font-bold leading-tight mb-4 text-gray-900 tracking-tight">
@@ -23,12 +24,12 @@ export const Hero = () => {
         <div className="flex gap-4 justify-center">
           <button
             onClick={() => window.location.href = '/create-agent'}
-            className="bg-gradient-to-r from-violet-500 to-pink-500 hover:from-violet-600 hover:to-pink-600 text-white px-10 py-3.5 rounded-2xl font-bold text-sm transition-all shadow-lg shadow-violet-200"
+            className="inline-flex items-center gap-2 bg-gradient-to-r from-violet-500 to-pink-500 hover:from-violet-600 hover:to-pink-600 text-white px-10 py-3.5 rounded-2xl font-bold text-sm transition-all shadow-lg shadow-violet-200"
           >
-            Build Your Agent
+            <Plus size={16} /> Build Your Agent
           </button>
-          <button className="border-2 border-violet-400 text-violet-600 hover:bg-violet-50 px-10 py-3.5 rounded-2xl font-bold text-sm transition-all">
-            Browse Shared Agents
+          <button className="inline-flex items-center gap-2 border-2 border-violet-400 text-violet-600 hover:bg-violet-50 px-10 py-3.5 rounded-2xl font-bold text-sm transition-all">
+            <Search size={16} /> Browse Shared Agents
           </button>
         </div>
       </div>
