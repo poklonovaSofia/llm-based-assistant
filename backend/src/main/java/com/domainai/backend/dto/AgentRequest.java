@@ -1,4 +1,4 @@
-package com.domainai.backend.dto.agent;
+package com.domainai.backend.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -20,5 +20,5 @@ public class AgentRequest {
     @Size(max = 1000)
     private String description;
 
-    private boolean isPublic = false;
+    private Boolean isPublic = false;
 }

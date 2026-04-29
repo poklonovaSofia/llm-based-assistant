@@ -1,7 +1,7 @@
 package com.domainai.backend.controller;
 
-import com.domainai.backend.dto.agent.AgentRequest;
-import com.domainai.backend.dto.agent.AgentResponse;
+import com.domainai.backend.dto.AgentRequest;
+import com.domainai.backend.dto.AgentResponse;
 import com.domainai.backend.models.Agent;
 import com.domainai.backend.models.User;
 import com.domainai.backend.service.AgentService;
@@ -33,7 +33,7 @@ public class AgentController {
         Agent agent = Agent.builder()
                 .name(request.getName())
                 .description(request.getDescription())
-                .isPublic(request.isPublic())
+                .isPublic(request.getIsPublic())
                 .creator(currentUser)
                 .build();
 
@@ -95,7 +95,7 @@ public class AgentController {
 
         agent.setName(request.getName());
         agent.setDescription(request.getDescription());
-        agent.setPublic(request.isPublic());
+        agent.setPublic(request.getIsPublic());
 
         Agent updated = agentService.createAgent(agent);
         return ResponseEntity.ok(mapToDto(updated));
