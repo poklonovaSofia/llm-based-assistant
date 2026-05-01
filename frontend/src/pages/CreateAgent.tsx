@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Sparkles, Lock, Globe, ArrowRight } from 'lucide-react';
 
 export default function CreateAgent() {
   const navigate = useNavigate();
@@ -18,7 +19,7 @@ export default function CreateAgent() {
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:8080/api/agents', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/agents`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -48,7 +49,7 @@ export default function CreateAgent() {
 
         <div className="mb-8">
           <div className="inline-flex items-center gap-2 bg-gradient-to-r from-violet-500 to-pink-500 text-white text-xs font-bold px-3 py-1 rounded-full mb-3">
-            ✦ NEW AGENT
+            <Sparkles size={12} /> NEW AGENT
           </div>
           <h1 className="text-2xl font-bold text-gray-900">Build Your Agent</h1>
           <p className="text-sm text-gray-400 mt-1">Create a specialized AI expert from your documents</p>
@@ -94,24 +95,24 @@ export default function CreateAgent() {
               <button
                 type="button"
                 onClick={() => setForm({ ...form, isPublic: false })}
-                className={`px-4 py-2 rounded-xl text-xs font-bold transition border-2 ${
+                className={`inline-flex items-center gap-1 px-4 py-2 rounded-xl text-xs font-bold transition border-2 ${
                   !form.isPublic
                     ? 'bg-gray-900 text-white border-gray-900'
                     : 'bg-white border-gray-200 text-gray-500'
                 }`}
               >
-                🔒 Private
+                <Lock size={11} /> Private
               </button>
               <button
                 type="button"
                 onClick={() => setForm({ ...form, isPublic: true })}
-                className={`px-4 py-2 rounded-xl text-xs font-bold transition border-2 ${
+                className={`inline-flex items-center gap-1 px-4 py-2 rounded-xl text-xs font-bold transition border-2 ${
                   form.isPublic
                     ? 'bg-gradient-to-r from-orange-400 to-pink-500 text-white border-transparent'
                     : 'bg-white border-gray-200 text-gray-500'
                 }`}
               >
-                🌐 Public
+                <Globe size={11} /> Public
               </button>
             </div>
           </div>
@@ -119,9 +120,9 @@ export default function CreateAgent() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-gradient-to-r from-violet-500 to-pink-500 hover:from-violet-600 hover:to-pink-600 text-white py-3 rounded-xl font-bold text-sm transition disabled:opacity-50 shadow-lg shadow-violet-200"
+            className="w-full inline-flex items-center justify-center gap-2 bg-gradient-to-r from-violet-500 to-pink-500 hover:from-violet-600 hover:to-pink-600 text-white py-3 rounded-xl font-bold text-sm transition disabled:opacity-50 shadow-lg shadow-violet-200"
           >
-            {loading ? 'Creating...' : 'Create Agent →'}
+            {loading ? 'Creating...' : <><span>Create Agent</span><ArrowRight size={15} /></>}
           </button>
         </form>
       </div>

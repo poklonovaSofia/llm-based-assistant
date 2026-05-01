@@ -19,7 +19,7 @@ export const PopularAgents = () => {
   const perPage = 3;
 
   useEffect(() => {
-    fetch('http://localhost:8080/api/agents/public')
+    fetch(`${import.meta.env.VITE_API_URL}/api/agents/public`)
       .then((res) => res.json())
       .then((data) => setAgents(data))
       .catch((err) => console.error('Failed to fetch public agents:', err))

@@ -29,10 +29,10 @@ export default function AgentDetails() {
     const fetchData = async () => {
       try {
         const [agentRes, docsRes] = await Promise.all([
-          fetch(`http://localhost:8080/api/agents/${agentId}`, {
+          fetch(`${import.meta.env.VITE_API_URL}/api/agents/${agentId}`, {
             headers: { 'Authorization': `Bearer ${token}` },
           }),
-          fetch(`http://localhost:8080/api/documents/${agentId}`, {
+          fetch(`${import.meta.env.VITE_API_URL}/api/documents/${agentId}`, {
             headers: { 'Authorization': `Bearer ${token}` },
           }),
         ]);
@@ -81,7 +81,7 @@ export default function AgentDetails() {
   const handleDelete = async () => {
     if (!confirm('Delete this agent?')) return;
     try {
-      await fetch(`http://localhost:8080/api/agents/${agentId}`, {
+      await fetch(`${import.meta.env.VITE_API_URL}/api/agents/${agentId}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` },
       });
@@ -93,7 +93,7 @@ export default function AgentDetails() {
 
   const handleDeleteDoc = async (filename: string) => {
     try {
-      await fetch(`http://localhost:8080/api/documents/${agentId}/${filename}`, {
+      await fetch(`${import.meta.env.VITE_API_URL}/api/documents/${agentId}/${filename}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` },
       });

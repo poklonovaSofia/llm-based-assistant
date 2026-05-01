@@ -30,7 +30,7 @@ export default function Chat() {
     const fetchAgent = async () => {
       try {
         const token = localStorage.getItem('token');
-        const response = await fetch(`http://localhost:8080/api/agents/${agentId}`, {
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/agents/${agentId}`, {
           headers: { 'Authorization': `Bearer ${token}` },
         });
         if (response.ok) {
@@ -49,7 +49,7 @@ export default function Chat() {
     const fetchHistory = async () => {
       try {
         const token = localStorage.getItem('token');
-        const response = await fetch(`http://localhost:8080/api/chat/${agentId}/history`, {
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/chat/${agentId}/history`, {
           headers: { 'Authorization': `Bearer ${token}` },
         });
         if (response.ok) {
@@ -129,7 +129,7 @@ export default function Chat() {
       const token = localStorage.getItem('token');
 
       // POST to Spring which proxies to LangChain /ask
-      const response = await fetch(`http://localhost:8080/api/chat/${agentId}/message`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/chat/${agentId}/message`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -41,7 +41,7 @@ const handleFinish = async () => {
     }
 
     const response = await fetch(
-      `http://localhost:8000/ingest-multiple?agent_name=${encodeURIComponent(agentName)}`,
+      `${import.meta.env.VITE_RAG_URL}/ingest-multiple?agent_name=${encodeURIComponent(agentName)}`,
       { method: 'POST', body: formData }
     );
 

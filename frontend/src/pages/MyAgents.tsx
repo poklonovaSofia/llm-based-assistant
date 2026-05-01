@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Sparkles, Plus, Globe, Lock, ArrowRight, MessageCircle, Pencil, Trash2, FileText } from 'lucide-react';
+import { Sparkles, Plus, Globe, Lock, MessageCircle, Pencil } from 'lucide-react';
 
 interface Agent {
   id: number;
@@ -17,45 +17,6 @@ export default function MyAgents() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  const [agentDocuments, setAgentDocuments] = useState<Record<number, string[]>>({});
-  const [expandedAgent, setExpandedAgent] = useState<number | null>(null);
-
-  const fetchDocuments = async (agentId: number) => {
-    if (expandedAgent === agentId) {
-      setExpandedAgent(null);
-      return;
-    }
-    try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:8080/api/documents/${agentId}`, {
-        headers: { 'Authorization': `Bearer ${token}` },
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setAgentDocuments(prev => ({ ...prev, [agentId]: data }));
-        setExpandedAgent(agentId);
-      }
-    } catch {
-      // ignore
-    }
-  };
-
-  const deleteDocument = async (agentId: number, filename: string) => {
-    try {
-      const token = localStorage.getItem('token');
-      await fetch(`http://localhost:8080/api/documents/${agentId}/${filename}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` },
-      });
-      setAgentDocuments(prev => ({
-        ...prev,
-        [agentId]: prev[agentId].filter(f => f !== filename),
-      }));
-    } catch {
-      // ignore
-    }
-  };
-
   useEffect(() => {
     const fetchAgents = async () => {
       try {
@@ -65,7 +26,7 @@ export default function MyAgents() {
           return;
         }
 
-        const response = await fetch('http://localhost:8080/api/agents/my', {
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/agents/my`, {
           headers: { 'Authorization': `Bearer ${token}` },
         });
 
@@ -158,29 +119,6 @@ export default function MyAgents() {
                   <MessageCircle size={12} /> Chat
                 </button>
               </div>
-
-              {expandedAgent === agent.id && (
-                <div className="mt-3 border-t border-gray-100 pt-3 space-y-2">
-                  {agentDocuments[agent.id]?.length === 0 ? (
-                    <p className="text-xs text-gray-400">No documents yet</p>
-                  ) : (
-                    agentDocuments[agent.id]?.map((filename) => (
-                      <div key={filename} className="flex items-center justify-between">
-                        <span className="inline-flex items-center gap-1 text-xs text-gray-600 truncate">
-                          <FileText size={11} className="flex-shrink-0 text-gray-400" />
-                          {filename}
-                        </span>
-                        <button
-                          onClick={(e) => { e.stopPropagation(); deleteDocument(agent.id, filename); }}
-                          className="inline-flex items-center gap-1 text-xs text-red-400 hover:text-red-600 transition ml-2 flex-shrink-0"
-                        >
-                          <Trash2 size={12} /> Delete
-                        </button>
-                      </div>
-                    ))
-                  )}
-                </div>
-              )}
             </div>
           ))}
         </div>
