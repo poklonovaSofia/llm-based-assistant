@@ -23,6 +23,13 @@ Librex lets you build specialized AI agents trained on your own documents — ke
 ```bash
 ollama pull openeurollm-slovak-ctx16k
 ```
+## Model
+
+This project uses [`openeurollm-slovak-ctx16k`](https://huggingface.co/openEuroLLM) — a Gemma3 fine-tune optimized for Slovak language with 16k context window.
+
+The model was run with extended context (`num_ctx=16384`) via Ollama on a VM with 32GB RAM / 16 vCPU.
+
+Any Ollama-compatible model can be used by changing `OLLAMA_MODEL` in `.env`.
 
 ---
 
