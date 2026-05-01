@@ -11,7 +11,7 @@
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?logo=postgresql&logoColor=white&style=flat-square)
 ![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white&style=flat-square)
 
-Librex lets you build specialized AI agents trained on your own documents — keep them private or share with the community.
+Librex lets you build specialized AI agents trained on your own documents - keep them private or share with the community.
 
 ---
 
@@ -25,7 +25,7 @@ ollama pull openeurollm-slovak-ctx16k
 ```
 ## Model
 
-This project uses [`openeurollm-slovak-ctx16k`](https://huggingface.co/openEuroLLM) — a Gemma3 fine-tune optimized for Slovak language with 16k context window.
+This project uses [`openeurollm-slovak-ctx16k`](https://huggingface.co/openEuroLLM) - a Gemma3 fine-tune optimized for Slovak language with 16k context window.
 
 The model was run with extended context (`num_ctx=16384`) via Ollama on a VM with 32GB RAM / 16 vCPU.
 
@@ -39,7 +39,7 @@ Any Ollama-compatible model can be used by changing `OLLAMA_MODEL` in `.env`.
 git clone 
 cd ai-system
 cp .env.example .env
-# edit .env — set OLLAMA_BASE_URL and JWT_SECRET
+# edit .env - set OLLAMA_BASE_URL and JWT_SECRET
 docker compose up --build
 ```
 
@@ -91,9 +91,9 @@ Query → rewrite → HyDE → hybrid search (vector + tsvector) → RRF → rer
 
 | Metric | Pharma RAG | Pharma Base | CSIRT RAG | CSIRT Base |
 |---|---|---|---|---|
-| Faithfulness | 0.983 | — | 0.950 | — |
+| Faithfulness | 0.983 | - | 0.950 | - |
 | Answer Relevancy | 0.768 | 0.401 | 0.603 | 0.461 |
-| Context Precision | 0.820 | — | 0.811 | — |
+| Context Precision | 0.820 | - | 0.811 | - |
 | Answer Correctness | 0.810 | 0.419 | 0.916 | 0.380 |
 
 Wilcoxon signed-rank test: p < 0.001 (n=25)
