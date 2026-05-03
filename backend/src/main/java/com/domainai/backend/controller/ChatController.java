@@ -25,7 +25,7 @@ public class ChatController {
             @PathVariable Long agentId,
             @RequestBody MessageRequest request,
             Authentication authentication) {
-
+        System.out.println("Hi");
         User user = userService.getCurrentUser(authentication.getName());
         Message message = chatService.sendMessage(agentId, request.getQuestion(), user);
 

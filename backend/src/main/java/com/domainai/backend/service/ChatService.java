@@ -9,6 +9,7 @@ import com.domainai.backend.repository.ChatRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.beans.factory.annotation.Value;
 
 
 import java.util.List;
@@ -22,6 +23,9 @@ public class ChatService {
     private final MessageRepository messageRepository;
     private final AgentService agentService;
     private final RestTemplate restTemplate;
+
+    @Value("${fastapi.url}")
+    private String fastApiUrl;
 
     public Chat getOrCreateChat(Long agentId, User user) {
         return chatRepository.findByAgentIdAndUserId(agentId, user.getId())
@@ -39,15 +43,13 @@ public class ChatService {
         Chat chat = getOrCreateChat(agentId, user);
         Agent agent = chat.getAgent();
 
-        // Відправляємо запит до FastAPI
-        String fastApiUrl = "http://localhost:8000/ask";
         Map<String, String> request = Map.of(
                 "query", question,
                 "agent_name", agent.getName()
         );
 
         Map<String, Object> response = restTemplate.postForObject(
-                fastApiUrl,
+                fastApiUrl + "/ask",
                 request,
                 Map.class
         );
