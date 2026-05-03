@@ -24,7 +24,7 @@ def generate_hypothetical_answer(query, agent_name):
     return response.content.strip()
 def _get_rag_core(original_query, rewritten_query, agent_name):
     hypothetical_doc = generate_hypothetical_answer(original_query, agent_name)
-    print(f"--- FULL HYDE DOC ---\n{hypothetical_doc}\n---------------------")
+    print(f"--- FULL HYDE DOC ---\n{hypothetical_doc}\n---------------------", flush=True)
     query_embedding = embedder.encode(hypothetical_doc).tolist()
     # query_embedding = embedder.encode(rewritten_query).tolist()
     # keywords = " | ".join([w for w in rewritten_query.split() if w])# todo &
@@ -49,8 +49,8 @@ def _get_rag_core(original_query, rewritten_query, agent_name):
             """, (agent_name, keywords, keywords)) # plainto_tsquery(%s) phraseto_tsquery(%s)
             txt_results = [row[0] for row in cur.fetchall()]
 
-    print(f"DEBUG: Vector results count: {len(vec_results)}")
-    print(f"DEBUG: Text results count: {len(txt_results)}")
+    print(f"DEBUG: Vector results count: {len(vec_results)}", flush=True)
+    print(f"DEBUG: Text results count: {len(txt_results)}", flush=True)
     # RRF (Reciprocal Rank Fusion)
     k = 40
     rrf_scores = {}
@@ -60,7 +60,10 @@ def _get_rag_core(original_query, rewritten_query, agent_name):
         rrf_scores[doc] = rrf_scores.get(doc, 0) + 1 / (rank + k)
 
     fused_docs = sorted(rrf_scores.items(), key=lambda x: x[1], reverse=True)
-    initial_contexts = [doc for doc, score in fused_docs[:20]]
+    initial_contexts = [doc for doc, score in fused_docs[:5]]
+    print(f"DEBUG: Fused docs count: {len(fused_docs)}", flush=True)
+    print(f"DEBUG: Initial contexts count: {len(initial_contexts)}", flush=True)
+    print(f"DEBUG: Starting reranking...", flush=True)
     # # Витягуємо entity з питання — беремо слова в дужках з топ чанку
     # # або просто фільтруємо по overlap entity між чанками
     # top_entities = {}
@@ -88,10 +91,11 @@ def _get_rag_core(original_query, rewritten_query, agent_name):
     # Реранкінг
     pairs = [[original_query, doc] for doc in initial_contexts]
     rerank_scores = reranker.predict(pairs)
+    print(f"DEBUG: Reranking done!", flush=True)
     reranked_results = sorted(zip(initial_contexts, rerank_scores), key=lambda x: x[1], reverse=True)
     
     # Вибираємо фінальні чанки
-    final_contexts = [res[0] for res in reranked_results[:6]]
+    final_contexts = [res[0] for res in reranked_results[:3]]
     combined_context = "\n\n".join(final_contexts)
     # 6. Генерація відповіді з контекстом
     system_prompt = (
@@ -104,9 +108,9 @@ def _get_rag_core(original_query, rewritten_query, agent_name):
         f"If the answer is not in the context, say you do not have enough information."
     )
     # Додай це перед відправкою в LLM
-    print("--- FINAL CONTEXT SENT TO LLM ---")
-    print(combined_context)
-    print("---------------------------------")
+    print("--- FINAL CONTEXT SENT TO LLM ---", flush=True)
+    print(combined_context, flush=True)
+    print("---------------------------------", flush=True)
     user_message = (
         f"Context:\n{combined_context}\n\n"
         f"Question: {original_query}\n\n"
@@ -126,9 +130,14 @@ def _get_rag_core(original_query, rewritten_query, agent_name):
 
 # 2. Твоя стара функція для звичайного /ask (залишається БЕЗ ЗМІН для зовнішнього світу)
 def get_rag_response(original_query, rewritten_query, agent_name):
-    answer, _ = _get_rag_core(original_query, rewritten_query, agent_name)
-    return answer
+    try:
+        answer, _ = _get_rag_core(original_query, rewritten_query, agent_name)
+        return answer
+    except Exception as e:
+        import traceback
+        print(traceback.format_exc(), flush=True)
+        raise
 
-# 3. Нова функція спеціально для /evaluate-testset
-def get_rag_response_with_chunks(original_query, rewritten_query, agent_name):
-    return _get_rag_core(original_query, rewritten_query, agent_name)
+# # 3. Нова функція спеціально для /evaluate-testset
+# def get_rag_response_with_chunks(original_query, rewritten_query, agent_name):
+#     return _get_rag_core(original_query, rewritten_query, agent_name)

@@ -6,7 +6,7 @@ from langdetect import detect
 from nltk.corpus import stopwords
 from app.llm_provider import llm_provider
 from app.llm_provider import rewrite_llm
-from app.llm_provider import eval_llm_provider
+# from app.llm_provider import eval_llm_provider
 llm = llm_provider.get_llm()
 embeddings = llm_provider.get_embeddings()
 
@@ -71,10 +71,10 @@ def rewrite_query_no_llm(query, max_keywords=8):
     words = re.findall(r"\w+", query.lower(), re.UNICODE)
     filtered = [w for w in words if w not in set(stopwords.words("english"))]
     return " ".join(filtered[:max_keywords])
-def call_llm_directly(prompt: str):
-    current_llm = llm_provider.get_llm()
-    response = current_llm.invoke(prompt)
-    return response.content.strip()
-def call_eval_llm_directly(prompt: str):
-    response = eval_llm_provider.get_llm().invoke(prompt)
-    return response.content.strip()
+# def call_llm_directly(prompt: str):
+#     current_llm = llm_provider.get_llm()
+#     response = current_llm.invoke(prompt)
+#     return response.content.strip()
+# def call_eval_llm_directly(prompt: str):
+#     response = eval_llm_provider.get_llm().invoke(prompt)
+#     return response.content.strip()
