@@ -65,22 +65,22 @@ class LLMProvider:
 llm_provider = LLMProvider(
     provider=os.getenv("LLM_PROVIDER", "ollama"),      # змінна середовища
     model_name=os.getenv("OPENAI_MODEL", "gpt-4o-mini"),
-    ollama_model=os.getenv("OLLAMA_MODEL", "gemma3-27b-ctx16k"), #llama3b-ctx16k gemma3-12b-ctx16k gemma3-4b-ctx16k openeurollm-slovak-ctx16k
+    ollama_model=os.getenv("OLLAMA_MODEL", "openeurollm-slovak-ctx16k"), #llama3b-ctx16k gemma3-12b-ctx16k gemma3-4b-ctx16k openeurollm-slovak-ctx16k gemma3-27b-ctx16k
     base_url=os.getenv("OLLAMA_BASE_URL", "http://localhost:11434"),
     temperature=0.4
 )
-eval_llm_provider = LLMProvider(
-    provider="openai",
-    model_name="gpt-4o-mini",
-    temperature=0.1,
-)
+# eval_llm_provider = LLMProvider(
+#     provider="openai",
+#     model_name="gpt-4o-mini",
+#     temperature=0.1,
+# )
 entity_llm = ChatOllama(
     model="gemma3-12b-ctx16k",
-    base_url="http://localhost:11434",
+    base_url=os.getenv("OLLAMA_BASE_URL", "http://localhost:11434"),
     temperature=0.1
 )
 rewrite_llm = ChatOllama(
-    model="gemma3-27b-ctx16k",
+    model="openeurollm-slovak-ctx16k",
     base_url=os.getenv("OLLAMA_BASE_URL", "http://localhost:11434"),
     temperature=0.1,
     num_predict=100
