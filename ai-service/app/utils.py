@@ -57,7 +57,6 @@ def rewrite_query_with_llm(query, agent_name):
         Question: {query}
         Rephrased:"""
 
-        # Заміна на llm.invoke
         response = rewrite_llm.invoke(prompt)
         rewritten = response.content.strip()
         rewritten = re.sub(r'[,.;:!?]', '', rewritten) 

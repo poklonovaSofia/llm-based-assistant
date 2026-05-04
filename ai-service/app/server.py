@@ -1,28 +1,28 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
 from app.rag_engine import get_rag_response
-# from app.rag_engine import get_rag_response_with_chunks
+from app.rag_engine import get_rag_response_with_chunks
 from app.utils import rewrite_query_with_llm
-# from app.db import get_connection
-# from app.db import get_random_chunks
+from app.db import get_connection
+from app.db import get_random_chunks
 from app.ingest import process_single_file
-# from app.utils import call_llm_directly
-from fastapi import UploadFile, File
-# from ragas import evaluate
-# from ragas.metrics import answer_relevancy, answer_correctness, context_precision, faithfulness
-# from datasets import Dataset
-# from fastapi import Body
-# import pandas as pd
-# import json
+from app.utils import call_llm_directly
+from fastapi import UploadFile, File, Form
+from ragas import evaluate
+from ragas.metrics import answer_relevancy, answer_correctness, context_precision, faithfulness
+from datasets import Dataset
+from fastapi import Body
+import pandas as pd
+import json
 import os
-# from app.llm_provider import llm_provider
-# from ragas.run_config import RunConfig
-# from app.llm_provider import eval_llm_provider
-# import math
-# from app.utils import call_eval_llm_directly
+from app.llm_provider import llm_provider
+from ragas.run_config import RunConfig
+from app.llm_provider import eval_llm_provider
+import math
+from app.utils import call_eval_llm_directly
 from fastapi.middleware.cors import CORSMiddleware
-# llm = llm_provider.get_llm()
-# embeddings = llm_provider.get_embeddings()
+llm = llm_provider.get_llm()
+embeddings = llm_provider.get_embeddings()
 
 app = FastAPI(title="RAG API")
 app.add_middleware(
@@ -47,20 +47,13 @@ class QueryRequest(BaseModel):
 @app.post("/ingest")
 async def trigger_ingestion(agent_name: str, file: UploadFile = File(...)):
     try:
-        # 1. Читаємо файл безпосередньо з запиту
         content = await file.read()
         filename = file.filename
-        
-        # 2. Зберігаємо тимчасово, щоб extract_text міг його обробити
         temp_path = f"temp_{filename}"
         with open(temp_path, "wb") as f:
             f.write(content)
-            
-        # 3. Викликаємо обробку (передаємо шлях до темп-файлу)
         from app.ingest import process_single_file
         process_single_file(agent_name, temp_path, filename)
-        
-        # 4. Видаляємо тимчасовий файл
         os.remove(temp_path)
         
         return {"message": f"File {filename} ingested for agent {agent_name}"}
@@ -128,17 +121,10 @@ async def ask_question(request: QueryRequest):
 # @app.post("/generate-testset")
 # async def generate_testset(agent_name: str, num_questions: int = 5):
 #     try:
-#         # 1. Отримуємо випадкові чанки з бази даних для цього агента
-#         # Це дасть моделі контекст, на основі якого вона вигадає питання
-#  # Треба буде додати цю функцію в db.py
-#         chunks = get_random_chunks(agent_name, limit=num_questions * 2)
-        
+#         chunks = get_random_chunks(agent_name, limit=num_questions * 2    
 #         if not chunks:
 #             return {"error": "No data found for this agent. Please ingest files first."}
-
-#         # 2. Формуємо промпт для LLM
-#         context_text = "\n\n".join([f"Chunk {i}: {c}" for i, c in enumerate(chunks)])
-        
+#         context_text = "\n\n".join([f"Chunk {i}: {c}" for i, c in enumerate(chunks)])       
 #         prompt = f"""
 #         You are an expert quality assurance engineer for RAG systems.
 #         Your goal is to create a test dataset based STRICTLY on the provided text chunks.
@@ -163,14 +149,8 @@ async def ask_question(request: QueryRequest):
 #         {{"question": "Slovak question", "ground_truth": "Complete detailed Slovak answer"}},
 #         ...
 #         ]
-#         """
-                
-#         # 3. Викликаємо твій LLM utils (наприклад, через ту ж функцію, що і rewrite)
-#   # Треба додати в utils.py
+#         """               
 #         raw_response = call_eval_llm_directly(prompt)
-        
-#         # Очищуємо відповідь від можливих ```json ... ```
-
 #         clean_json = raw_response.replace("```json", "").replace("```", "").strip()
 #         testset = json.loads(clean_json)
         
@@ -179,102 +159,99 @@ async def ask_question(request: QueryRequest):
 #     except Exception as e:
 #         return {"error": str(e)}
     
-# @app.post("/evaluate-testset")
-# async def evaluate_testset(
-#     agent_name: str = Form(...), 
-#     file: UploadFile = File(...),
-#     compare_no_rag: str = Form("false")
-# ):
-#     do_compare = compare_no_rag.lower() == "true"
-#     try:
-#         content = await file.read()
-#         testset = json.loads(content)
-#         # llm = ChatOpenAI(model="gpt-4o-mini")
-#         # embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
+@app.post("/evaluate-testset")
+async def evaluate_testset(
+    agent_name: str = Form(...), 
+    file: UploadFile = File(...),
+    compare_no_rag: str = Form("false")
+):
+    do_compare = compare_no_rag.lower() == "true"
+    try:
+        content = await file.read()
+        testset = json.loads(content)
+        # llm = ChatOpenAI(model="gpt-4o-mini")
+        # embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
 
-#         async def run_ragas_eval(data_list):
-#             df = pd.DataFrame(data_list)
-#             dataset = Dataset.from_pandas(df)
-            
-#             # # Додаємо answer_correctness завжди — вона працює без контексту
-#             # answer_correctness.weights = [0.4, 0.6]
-#             active_metrics = [
-#                 faithfulness,
-#                 answer_relevancy,
-#                 answer_correctness   # ← ось тут додано
-#             ]
-#             # answer_correctness.weights = [0.4, 0.6]
-#             if "contexts" in df.columns and df["contexts"].apply(lambda x: len(x) > 0).any():
-#                 active_metrics.append(context_precision)
-#             config = RunConfig(timeout=3600, max_workers=1, max_retries=1)
-#             res = evaluate(
-#                 dataset=dataset,
-#                 metrics=active_metrics,
-#                 llm=eval_llm_provider.get_llm(),        # ← було llm_provider.get_llm()
-#                 embeddings=eval_llm_provider.get_embeddings(), 
-#                 run_config=config
-#             )
-#             df_result = res.to_pandas().fillna(0.0)
-
-#             summary = {}
-#             for col in df_result.columns:
-#                 if col not in ["user_input", "retrieved_contexts", "response", "reference"]:
-#                     val = float(df_result[col].mean())
-#                     summary[col] = 0.0 if (math.isnan(val) or math.isinf(val)) else val
-
-#             return {
-#                 "summary_scores": summary,
-#                 "individual_results": df_result.to_dict(orient="records")
-#             }
-
-#         # 1. RAG evaluation (завжди)
-#         rag_eval_data = []
-#         for i, item in enumerate(testset):
-#             q = item["question"]
-#             gt = item["ground_truth"]
-#             rewritten = rewrite_query_with_llm(q, agent_name)
-#             print(rewritten)
-#             answer, chunks = get_rag_response_with_chunks(q, rewritten, agent_name) #rewritten
-#             rag_eval_data.append({
-#                 "question": q,
-#                 "answer": answer,
-#                 "contexts": chunks,
-#                 "ground_truth": gt
-#             })
-#             pd.DataFrame(rag_eval_data).to_csv(f"rag_progress_{agent_name}.csv", index=False)
-#             print(f"[{i+1}/{len(testset)}] save in rag_progress_{agent_name}.csv")
+        async def run_ragas_eval(data_list):
+            df = pd.DataFrame(data_list)
+            dataset = Dataset.from_pandas(df)
         
-#         rag_results = await run_ragas_eval(rag_eval_data)
-#         rag_df = pd.DataFrame(rag_results["individual_results"])
-#         rag_df.to_csv("rag_results.csv", index=False)
-#         # 2. No-RAG evaluation (якщо галочка)
-#         if do_compare:
-#             no_rag_data = []
-#             for item in testset:
-#                 q = item["question"]
-#                 gt = item["ground_truth"]
-#                 no_rag_answer = call_llm_directly(f"Answer the following question: {q}")
-#                 no_rag_data.append({
-#                     "question": q,
-#                     "answer": no_rag_answer,
-#                     "contexts": [], 
-#                     "ground_truth": gt
-#                 })
+            # answer_correctness.weights = [0.4, 0.6]
+            active_metrics = [
+                faithfulness,
+                answer_relevancy,
+                answer_correctness 
+            ]
+            # answer_correctness.weights = [0.4, 0.6]
+            if "contexts" in df.columns and df["contexts"].apply(lambda x: len(x) > 0).any():
+                active_metrics.append(context_precision)
+            config = RunConfig(timeout=3600, max_workers=1, max_retries=1)
+            res = evaluate(
+                dataset=dataset,
+                metrics=active_metrics,
+                llm=eval_llm_provider.get_llm(),
+                embeddings=eval_llm_provider.get_embeddings(), 
+                run_config=config
+            )
+            df_result = res.to_pandas().fillna(0.0)
+
+            summary = {}
+            for col in df_result.columns:
+                if col not in ["user_input", "retrieved_contexts", "response", "reference"]:
+                    val = float(df_result[col].mean())
+                    summary[col] = 0.0 if (math.isnan(val) or math.isinf(val)) else val
+
+            return {
+                "summary_scores": summary,
+                "individual_results": df_result.to_dict(orient="records")
+            }
+
+        rag_eval_data = []
+        for i, item in enumerate(testset):
+            q = item["question"]
+            gt = item["ground_truth"]
+            rewritten = rewrite_query_with_llm(q, agent_name)
+            print(rewritten)
+            answer, chunks = get_rag_response_with_chunks(q, rewritten, agent_name) #rewritten
+            rag_eval_data.append({
+                "question": q,
+                "answer": answer,
+                "contexts": chunks,
+                "ground_truth": gt
+            })
+            pd.DataFrame(rag_eval_data).to_csv(f"rag_progress_{agent_name}.csv", index=False)
+            print(f"[{i+1}/{len(testset)}] save in rag_progress_{agent_name}.csv")
+        
+        rag_results = await run_ragas_eval(rag_eval_data)
+        rag_df = pd.DataFrame(rag_results["individual_results"])
+        rag_df.to_csv("rag_results.csv", index=False)
+        if do_compare:
+            no_rag_data = []
+            for item in testset:
+                q = item["question"]
+                gt = item["ground_truth"]
+                no_rag_answer = call_llm_directly(f"Answer the following question: {q}")
+                no_rag_data.append({
+                    "question": q,
+                    "answer": no_rag_answer,
+                    "contexts": [], 
+                    "ground_truth": gt
+                })
             
                 
-#             no_rag_results = await run_ragas_eval(no_rag_data)
-#             no_rag_df = pd.DataFrame(no_rag_results["individual_results"])
-#             no_rag_df.to_csv("no_rag_results.csv", index=False)
+            no_rag_results = await run_ragas_eval(no_rag_data)
+            no_rag_df = pd.DataFrame(no_rag_results["individual_results"])
+            no_rag_df.to_csv("no_rag_results.csv", index=False)
         
-#             return {
-#                 "rag": rag_results,
-#                 "no_rag": no_rag_results,
-#                 "compare": True
-#             }
+            return {
+                "rag": rag_results,
+                "no_rag": no_rag_results,
+                "compare": True
+            }
 
-#         return rag_results
+        return rag_results
 
-#     except Exception as e:
-#         import traceback
-#         print(traceback.format_exc())
-#         return {"error": f"Error during evaluation: {str(e)}"}
+    except Exception as e:
+        import traceback
+        print(traceback.format_exc())
+        return {"error": f"Error during evaluation: {str(e)}"}

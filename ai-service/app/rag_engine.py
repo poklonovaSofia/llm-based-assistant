@@ -18,8 +18,6 @@ def generate_hypothetical_answer(query, agent_name):
         f"Question: {query}"
     )
     current_llm = rewrite_llm
-    
-    # LangChain-стиль виклику (працює і для ChatOpenAI, і для ChatOllama)
     response = current_llm.invoke(prompt)
     return response.content.strip()
 def _get_rag_core(original_query, rewritten_query, agent_name):
@@ -32,7 +30,6 @@ def _get_rag_core(original_query, rewritten_query, agent_name):
     #keywords = " & ".join([w for w in rewritten_query.split() if len(w) > 2])
     with get_connection() as conn:
         with conn.cursor() as cur:
-            # Векторний пошук
             cur.execute("""
                 SELECT content FROM documents 
                 WHERE agent_name = %s 
@@ -40,7 +37,6 @@ def _get_rag_core(original_query, rewritten_query, agent_name):
             """, (agent_name, query_embedding))
             vec_results = [row[0] for row in cur.fetchall()]
             
-            # Текстовий пошук
             cur.execute("""
                 SELECT content FROM documents 
                 WHERE agent_name = %s 
@@ -51,7 +47,6 @@ def _get_rag_core(original_query, rewritten_query, agent_name):
 
     print(f"DEBUG: Vector results count: {len(vec_results)}", flush=True)
     print(f"DEBUG: Text results count: {len(txt_results)}", flush=True)
-    # RRF (Reciprocal Rank Fusion)
     k = 40
     rrf_scores = {}
     for rank, doc in enumerate(vec_results):
@@ -64,21 +59,14 @@ def _get_rag_core(original_query, rewritten_query, agent_name):
     print(f"DEBUG: Fused docs count: {len(fused_docs)}", flush=True)
     print(f"DEBUG: Initial contexts count: {len(initial_contexts)}", flush=True)
     print(f"DEBUG: Starting reranking...", flush=True)
-    # # Витягуємо entity з питання — беремо слова в дужках з топ чанку
-    # # або просто фільтруємо по overlap entity між чанками
     # top_entities = {}
     # for doc, score in fused_docs[:10]:
-    #     # Entity зберігається як [ENTITY NAME] на початку чанку
     #     entity_match = re.match(r'\[([^\]]+)\]', doc)
     #     if entity_match:
     #         entity = entity_match.group(1)
     #         top_entities[entity] = top_entities.get(entity, 0) + score
-
-    # # Беремо найбільш релевантну entity
     # dominant_entity = max(top_entities, key=top_entities.get) if top_entities else None
     # print(f"DEBUG: Dominant entity: {dominant_entity}")
-
-    # # Фільтруємо — спочатку чанки з домінантною entity, потім решта
     # if dominant_entity:
     #     primary = [(doc, score) for doc, score in fused_docs[:10] 
     #             if dominant_entity in doc]
@@ -87,17 +75,13 @@ def _get_rag_core(original_query, rewritten_query, agent_name):
     #     initial_contexts = [doc for doc, score in (primary + secondary)[:10]]
     # else:
     #     initial_contexts = [doc for doc, score in fused_docs[:10]]
-
-    # Реранкінг
     pairs = [[original_query, doc] for doc in initial_contexts]
     rerank_scores = reranker.predict(pairs)
     print(f"DEBUG: Reranking done!", flush=True)
     reranked_results = sorted(zip(initial_contexts, rerank_scores), key=lambda x: x[1], reverse=True)
-    
-    # Вибираємо фінальні чанки
+
     final_contexts = [res[0] for res in reranked_results[:3]]
     combined_context = "\n\n".join(final_contexts)
-    # 6. Генерація відповіді з контекстом
     system_prompt = (
         f"You are a professional assistant for '{agent_name}'. "
         f"Your ONLY source of truth is the provided context. "
@@ -107,7 +91,6 @@ def _get_rag_core(original_query, rewritten_query, agent_name):
         f"Respond in the same language as the question. "
         f"If the answer is not in the context, say you do not have enough information."
     )
-    # Додай це перед відправкою в LLM
     print("--- FINAL CONTEXT SENT TO LLM ---", flush=True)
     print(combined_context, flush=True)
     print("---------------------------------", flush=True)
@@ -118,7 +101,6 @@ def _get_rag_core(original_query, rewritten_query, agent_name):
     )
     current_llm = llm_provider.get_llm()
     
-    # LangChain-стиль (messages для чат-моделей)
     response = current_llm.invoke([
         {"role": "system", "content": system_prompt},
         {"role": "user", "content": user_message}
@@ -128,7 +110,6 @@ def _get_rag_core(original_query, rewritten_query, agent_name):
     
     return answer, final_contexts
 
-# 2. Твоя стара функція для звичайного /ask (залишається БЕЗ ЗМІН для зовнішнього світу)
 def get_rag_response(original_query, rewritten_query, agent_name):
     try:
         answer, _ = _get_rag_core(original_query, rewritten_query, agent_name)
@@ -138,6 +119,5 @@ def get_rag_response(original_query, rewritten_query, agent_name):
         print(traceback.format_exc(), flush=True)
         raise
 
-# # 3. Нова функція спеціально для /evaluate-testset
-# def get_rag_response_with_chunks(original_query, rewritten_query, agent_name):
-#     return _get_rag_core(original_query, rewritten_query, agent_name)
+def get_rag_response_with_chunks(original_query, rewritten_query, agent_name):
+    return _get_rag_core(original_query, rewritten_query, agent_name)
