@@ -121,7 +121,6 @@ export default function AgentDetails() {
         </div>
       )}
 
-      {/* Agent Info */}
       <div className="bg-white border-2 border-gray-100 rounded-2xl p-6 mb-6">
         <div className="flex items-start justify-between mb-4">
           <div className="inline-flex items-center gap-2 bg-gradient-to-r from-violet-500 to-pink-500 text-white text-xs font-bold px-3 py-1 rounded-full">
@@ -219,8 +218,6 @@ export default function AgentDetails() {
           </div>
         )}
       </div>
-
-      {/* Documents */}
       <div className="bg-white border-2 border-gray-100 rounded-2xl p-6 mb-6">
         <div className="flex items-center justify-between mb-4">
           <div className="inline-flex items-center gap-2 bg-gradient-to-r from-violet-500 to-pink-500 text-white text-xs font-bold px-3 py-1 rounded-full">
@@ -255,8 +252,6 @@ export default function AgentDetails() {
           </div>
         )}
       </div>
-
-      {/* Actions */}
       <button
         onClick={() => navigate(`/chat/${agentId}`)}
         className="inline-flex items-center justify-center gap-2 w-full bg-gradient-to-r from-violet-500 to-pink-500 hover:from-violet-600 hover:to-pink-600 text-white py-3 rounded-xl font-bold text-sm transition shadow-lg shadow-violet-200"

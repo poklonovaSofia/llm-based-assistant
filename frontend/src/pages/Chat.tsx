@@ -38,7 +38,6 @@ export default function Chat() {
           setAgent(data);
         }
       } catch {
-        // fallback — show agent id
       } finally {
         setAgentLoading(false);
       }
@@ -102,8 +101,6 @@ export default function Chat() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
-
-  // Auto-resize textarea
   useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
@@ -127,8 +124,6 @@ export default function Chat() {
 
     try {
       const token = localStorage.getItem('token');
-
-      // POST to Spring which proxies to LangChain /ask
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/chat/${agentId}/message`, {
         method: 'POST',
         headers: {
@@ -173,8 +168,6 @@ export default function Chat() {
 
   return (
     <div className="flex flex-col h-[calc(100vh-74px)] bg-gradient-to-br from-violet-50 via-white to-pink-50">
-
-      {/* Header */}
         <div className="sticky top-0 z-10 bg-white border-b border-gray-100 px-6 py-4 flex items-center gap-4 shadow-sm">
           <button
             onClick={() => navigate('/my-agents')}
@@ -204,8 +197,6 @@ export default function Chat() {
           <Plus size={12} /> Add docs
         </button>
       </div>
-
-      {/* Messages */}
       <div className="flex-1 overflow-y-auto px-4 py-6">
         <div className="max-w-4xl mx-auto space-y-4">
           {messages.length === 0 && (
@@ -263,8 +254,6 @@ export default function Chat() {
           <div ref={messagesEndRef} />
         </div>
       </div>
-
-      {/* Input */}
       <div className="bg-white border-t border-gray-100 px-4 py-4">
         <div className="max-w-4xl mx-auto flex items-end gap-3">
           <div className="flex-1 border-2 border-gray-200 focus-within:border-violet-400 rounded-2xl transition-colors bg-white overflow-hidden">

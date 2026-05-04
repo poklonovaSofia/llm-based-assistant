@@ -62,8 +62,6 @@ const handleFinish = async () => {
   return (
     <div className="flex-1 flex items-center justify-center px-4 py-8">
       <div className="w-full max-w-2xl">
-
-        {/* Header */}
         <div className="mb-8">
           {!isEditing && (
             <div className="inline-flex items-center gap-2 bg-gradient-to-r from-violet-500 to-pink-500 text-white text-xs font-bold px-3 py-1 rounded-full mb-3">
@@ -80,15 +78,11 @@ const handleFinish = async () => {
             }
           </p>
         </div>
-
-        {/* Error */}
         {error && (
           <div className="bg-red-50 border-2 border-red-300 text-red-600 px-4 py-3 rounded-xl mb-6 text-sm">
             {error}
           </div>
         )}
-
-        {/* Drop zone */}
         <div
           onDragOver={e => e.preventDefault()}
           onDrop={handleDrop}
@@ -108,8 +102,6 @@ const handleFinish = async () => {
             />
           </label>
         </div>
-
-        {/* File list */}
         {files.length > 0 && (
           <div className="bg-white border-2 border-gray-100 rounded-2xl overflow-hidden mb-4">
             {files.map((file, index) => (
@@ -131,15 +123,11 @@ const handleFinish = async () => {
             ))}
           </div>
         )}
-
-        {/* Progress */}
         {uploading && (
           <div className="bg-violet-50 border-2 border-violet-200 rounded-xl px-4 py-3 mb-4 text-sm text-violet-700 font-medium">
             Uploading {uploadedCount} / {files.length} files...
           </div>
         )}
-
-        {/* Submit */}
         <button
           onClick={handleFinish}
           disabled={files.length === 0 || uploading}
@@ -153,8 +141,6 @@ const handleFinish = async () => {
             <><span>Upload & Finish</span><ArrowRight size={15} /></>
           )}
         </button>
-
-        {/* Skip */}
         {!isEditing && (
           <button
             onClick={() => navigate(`/chat/${agentId}`)}
