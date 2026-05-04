@@ -8,10 +8,6 @@ from datetime import datetime
 load_dotenv()
 BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:8000")
 
-# ────────────────────────────────────────────────
-#   Ваші функції без змін
-# ────────────────────────────────────────────────
-
 async def evaluate_testset(agent_name: str, file_content: bytes, compare_no_rag: bool = False):
     try:
         files = {"file": ("testset.json", file_content, "application/json")}
@@ -33,7 +29,6 @@ async def evaluate_testset(agent_name: str, file_content: bytes, compare_no_rag:
 
 @ui.page("/")
 def main_page():
-    # ─── Глобальний стиль ────────────────────────────────
     ui.context.client.content.classes('bg-gray-50')
 
     ui.label("RAG Evaluation Tool") \
@@ -148,7 +143,6 @@ def main_page():
                         ui.label("Improvement thanks to RAG").classes('text-2xl font-bold mb-6 text-green-800')
 
                         try:
-                            # Безпечне обчислення середнього
                             def safe_avg(key: str, results_list: list) -> float:
                                 values = [float(r.get(key, 0)) for r in results_list if r.get(key) is not None]
                                 return sum(values) / len(values) if values else 0.0
@@ -163,21 +157,17 @@ def main_page():
                             norag_correct = safe_avg("answer_correctness", norag_ind)
 
                             with ui.row().classes('gap-6 justify-center flex-wrap mb-10'):
-                                # Faithfulness (залишаємо для повноти, але менш важливий)
                                 with ui.card().classes('p-6 text-center min-w-[280px] shadow-lg border-t-4 border-green-500'):
                                     ui.label("Faithfulness Improvement").classes('text-base font-medium mb-2')
                                     delta_f = (rag_faith - norag_faith) * 100
                                     ui.label(f"+{delta_f:.1f}%").classes('text-4xl font-bold text-green-600')
                                     ui.label(f"({norag_faith:.2f} → {rag_faith:.2f})").classes('text-sm text-gray-600 mt-1')
-
-                                # Answer Correctness — головна метрика
                                 with ui.card().classes('p-6 text-center min-w-[280px] shadow-lg border-t-4 border-green-600 bg-green-50/30'):
                                     ui.label("Answer Correctness Boost").classes('text-base font-medium mb-2 text-green-800')
                                     delta_c = (rag_correct - norag_correct) * 100
                                     ui.label(f"+{delta_c:.1f}%").classes('text-5xl font-extrabold text-green-700')
                                     ui.label(f"({norag_correct:.2f} → {rag_correct:.2f})").classes('text-sm text-gray-700 mt-1')
 
-                            # Підсумковий коментар
                             if delta_c > 25:
                                 ui.label("Significant improvement in answer accuracy thanks to RAG!").classes('text-xl text-green-700 font-medium text-center mt-6')
                             elif delta_c > 10:
@@ -203,7 +193,6 @@ def show_results(data: dict, title: str, accent_color: str = "orange"):
         with ui.row().classes('gap-5 flex-wrap mb-10 justify-center'):
             for metric, value in score_dict.items():
                 if isinstance(value, (int, float)) and value is not None:
-                    # Робимо answer_correctness зеленим, бо це ключова метрика
                     color = "green" if metric == "answer_correctness" else accent_color
                     with ui.card().classes(f'p-6 text-center min-w-[160px] shadow-md border-t-4 border-{color}-500 bg-gradient-to-b from-white to-gray-50'):
                         ui.label(metric.replace("_", " ").title()) \
@@ -220,15 +209,12 @@ def show_results(data: dict, title: str, accent_color: str = "orange"):
             {"name": "answer_relevancy", "label": "Answer Relev.", "field": "answer_relevancy"},
             {"name": "context_precision","label": "Context Prec.", "field": "context_precision"},
         ]
-
-        # Додаємо колонку answer_correctness, якщо вона є в даних
         sample_row = data["individual_results"][0]
         if "answer_correctness" in sample_row:
             columns.append(
                 {"name": "answer_correctness", "label": "Answer Correct.", "field": "answer_correctness"}
             )
 
-        # Сортуємо за answer_correctness за замовчуванням (якщо є)
         sort_by = "answer_correctness" if "answer_correctness" in sample_row else "faithfulness"
 
         ui.table(
@@ -244,5 +230,5 @@ ui.run(
     port=8505,
     reload=True,
     dark=False,
-    storage_secret="bakalarka_2024_secret_key"
+    storage_secret="bakalarka_2026_secret_key"
 )
