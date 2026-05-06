@@ -17,7 +17,7 @@ import json
 import os
 from app.llm_provider import llm_provider
 from ragas.run_config import RunConfig
-from app.llm_provider import eval_llm_provider
+from app.llm_provider import get_eval_llm_provider
 import math
 from app.utils import call_eval_llm_directly
 from fastapi.middleware.cors import CORSMiddleware
@@ -189,8 +189,8 @@ async def evaluate_testset(
             res = evaluate(
                 dataset=dataset,
                 metrics=active_metrics,
-                llm=eval_llm_provider.get_llm(),
-                embeddings=eval_llm_provider.get_embeddings(), 
+                llm=get_eval_llm_provider().get_llm(),
+                embeddings=get_eval_llm_provider().get_embeddings(),
                 run_config=config
             )
             df_result = res.to_pandas().fillna(0.0)

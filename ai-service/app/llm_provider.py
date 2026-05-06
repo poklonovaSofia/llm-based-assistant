@@ -66,11 +66,17 @@ llm_provider = LLMProvider(
     base_url=os.getenv("OLLAMA_BASE_URL", "http://localhost:11434"),
     temperature=0.4
 )
-eval_llm_provider = LLMProvider(
-    provider="openai",
-    model_name="gpt-4o-mini",
-    temperature=0.1,
-)
+_eval_llm_provider = None
+
+def get_eval_llm_provider():
+    global _eval_llm_provider
+    if _eval_llm_provider is None:
+        _eval_llm_provider = LLMProvider(
+            provider="openai",
+            model_name="gpt-4o-mini",
+            temperature=0.1,
+        )
+    return _eval_llm_provider
 entity_llm = ChatOllama(
     model="openeurollm-slovak-ctx16k",
     base_url=os.getenv("OLLAMA_BASE_URL", "http://localhost:11434"),
