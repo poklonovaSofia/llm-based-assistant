@@ -36,8 +36,8 @@ Any Ollama-compatible model can be used by changing `OLLAMA_MODEL` in `.env`.
 ## Quickstart
 
 ```bash
-git clone 
-cd ai-system
+git clone https://github.com/poklonovaSofia/llm-based-assistant
+cd llm-based-assistant
 cp .env.example .env
 # edit .env - set OLLAMA_BASE_URL and JWT_SECRET
 docker compose up --build
@@ -92,8 +92,8 @@ Query → rewrite → HyDE → hybrid search (vector + tsvector) → RRF → rer
 | Metric | Pharma RAG | Pharma Base | CSIRT RAG | CSIRT Base |
 |---|---|---|---|---|
 | Faithfulness | 0.983 | - | 0.950 | - |
-| Answer Relevancy | 0.768 | 0.401 | 0.603 | 0.461 |
+| Answer Relevancy | 0.768 | 0.401 | 0.653 | 0.461 |
 | Context Precision | 0.820 | - | 0.811 | - |
-| Answer Correctness | 0.810 | 0.419 | 0.916 | 0.380 |
+| Answer Correctness | 0.853 | 0.419 | 0.916 | 0.380 |
 
 Wilcoxon signed-rank test: p < 0.001 (n=25)
