@@ -22,7 +22,8 @@ langchain-openai = "^0.3.0"
 langchain-ollama = "^0.3.0"
 
 # Embeddings / Reranking
-sentence-transformers = "^2.2.2"
+sentence-transformers = "2.2.2"
+huggingface_hub = "0.14.1"
 torch = "^2.1.0"
 
 # Document processing
