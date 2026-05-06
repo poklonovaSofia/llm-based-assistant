@@ -36,6 +36,7 @@ ragas = "^0.2.0"
 datasets = "^2.14.0"
 pandas = "^2.0.0"
 tokenizers = ">=0.13.0"
+pyarrow = "14.0.2"
 
 # Database
 psycopg = {extras = ["binary"], version = "^3.1.0"}
