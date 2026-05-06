@@ -30,6 +30,11 @@ PyMuPDF = "^1.22.5"
 python-docx = "*"
 mammoth = "^1.6.1"
 
+# Evaluation
+ragas = "^0.2.0"
+datasets = "^2.14.0"
+pandas = "^2.0.0"
+
 # Database
 psycopg = {extras = ["binary"], version = "^3.1.0"}
 
