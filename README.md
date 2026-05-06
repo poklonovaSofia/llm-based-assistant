@@ -68,6 +68,21 @@ OLLAMA_BASE_URL=http://<server-ip>:11434
 JWT_SECRET=your_secret_here
 ```
 
+> **Note:** The backend uses default values for most settings. The only required change is `JWT_SECRET` — replace it with any random string.
+
+---
+## Evaluation Interface
+
+To run the NiceGUI evaluation interface, ensure the full system is running first (`docker compose up`) and Ollama is accessible, then:
+
+```bash
+cd evaluation-ui
+pip install -r requirements.txt
+python main.py
+```
+
+Open http://localhost:8505
+
 ---
 
 ## Architecture
